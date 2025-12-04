@@ -128,10 +128,6 @@ export function Confirmation({ data, onReset }: ConfirmationProps) {
             </li>
             <li className="flex items-start gap-2">
               <span className="flex-shrink-0">•</span>
-              <span>A confirmation email has been sent to {data.email}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="flex-shrink-0">•</span>
               <span>Test drives are weather permitting and subject to availability</span>
             </li>
           </ul>

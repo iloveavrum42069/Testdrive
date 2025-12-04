@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Car } from '../App';
-import { Check } from 'lucide-react';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getPageSettings } from './PageEditor';
 
@@ -11,14 +11,42 @@ interface CarSelectionProps {
 
 export function CarSelection({ onNext, selectedCar }: CarSelectionProps) {
   const [cars, setCars] = useState<Car[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadSettings = async () => {
+      setIsLoading(true);
       const settings = await getPageSettings();
       setCars(settings.cars);
+      setIsLoading(false);
     };
     loadSettings();
   }, []);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+        <p className="text-slate-600">Loading available vehicles...</p>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (cars.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 text-center">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-amber-600" />
+        </div>
+        <h3 className="text-slate-900 text-lg font-semibold">No Vehicles Available</h3>
+        <p className="text-slate-600 max-w-md">
+          There are currently no vehicles configured for test drives. Please check back later or contact us for assistance.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -33,8 +61,8 @@ export function CarSelection({ onNext, selectedCar }: CarSelectionProps) {
             key={car.id}
             onClick={() => onNext(car)}
             className={`group relative bg-white border-2 rounded-xl overflow-hidden transition-all duration-300 text-left transform hover:-translate-y-1 hover:shadow-2xl active:scale-95 ${selectedCar?.id === car.id
-                ? 'border-blue-500 shadow-xl ring-4 ring-blue-100'
-                : 'border-slate-200 hover:border-blue-400 shadow-md'
+              ? 'border-blue-500 shadow-xl ring-4 ring-blue-100'
+              : 'border-slate-200 hover:border-blue-400 shadow-md'
               }`}
           >
             {selectedCar?.id === car.id && (
