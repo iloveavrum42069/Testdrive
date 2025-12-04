@@ -36,41 +36,22 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
     loadSettings();
   }, []);
 
-  // Load booked and held slots
+  // Load booked and held slots (optimized - only 2 DB queries)
   const loadSlotStatus = useCallback(async () => {
     if (!date || !car.id) return;
 
-    const registrations = await storageService.getRegistrations();
-    const booked = new Set<string>();
-    const held = new Set<string>();
+    const status = await storageService.getSlotStatusBatch(car.id, date, sessionId);
 
-    registrations.forEach((reg: any) => {
-      if (reg.car?.id === car.id && reg.date === date) {
-        booked.add(reg.timeSlot || '');
-      }
-    });
+    setBookedSlots(new Set(status.bookedSlots));
+    setHeldSlots(new Set(status.heldSlots));
 
-    // Check holds for each time slot
-    for (const slot of timeSlots) {
-      if (!booked.has(slot)) {
-        const isAvailable = await storageService.isSlotAvailable(car.id, date, slot, sessionId);
-        if (!isAvailable) {
-          // Check if it's our hold
-          const hold = await storageService.getSlotHold(car.id, date, slot);
-          if (hold && hold.session_id === sessionId) {
-            setMyHeldSlot(slot);
-            const remaining = Math.max(0, new Date(hold.expires_at).getTime() - Date.now());
-            setHoldTimeRemaining(Math.floor(remaining / 1000));
-          } else if (hold) {
-            held.add(slot);
-          }
-        }
-      }
+    if (status.myHold) {
+      setMyHeldSlot(status.myHold.slot);
+      setTimeSlot(status.myHold.slot);
+      const remaining = Math.max(0, new Date(status.myHold.expiresAt).getTime() - Date.now());
+      setHoldTimeRemaining(Math.floor(remaining / 1000));
     }
-
-    setBookedSlots(booked);
-    setHeldSlots(held);
-  }, [date, car.id, timeSlots, sessionId]);
+  }, [date, car.id, sessionId]);
 
   // Real-time subscriptions for instant updates across devices
   useEffect(() => {

@@ -376,6 +376,53 @@ export class SupabaseStorageService {
         }
     }
 
+    /**
+     * Get all slot statuses in a single batch (optimized - only 2 DB queries)
+     */
+    async getSlotStatusBatch(carId: string, date: string, sessionId: string): Promise<{
+        bookedSlots: string[];
+        heldSlots: string[];
+        myHold: { slot: string; expiresAt: string } | null;
+    }> {
+        try {
+            // Clean up expired holds first
+            await this.cleanupExpiredHolds();
+
+            // Query 1: Get all registrations for this car and date
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('time_slot')
+                .eq('date', date)
+                .filter('car_data->>id', 'eq', carId);
+
+            const bookedSlots = (registrations || []).map(r => r.time_slot).filter(Boolean);
+
+            // Query 2: Get all active holds for this car and date
+            const { data: holds } = await supabase
+                .from('slot_holds')
+                .select('time_slot, session_id, expires_at')
+                .eq('car_id', carId)
+                .eq('date', date)
+                .gt('expires_at', new Date().toISOString());
+
+            const heldSlots: string[] = [];
+            let myHold: { slot: string; expiresAt: string } | null = null;
+
+            (holds || []).forEach(hold => {
+                if (hold.session_id === sessionId) {
+                    myHold = { slot: hold.time_slot, expiresAt: hold.expires_at };
+                } else {
+                    heldSlots.push(hold.time_slot);
+                }
+            });
+
+            return { bookedSlots, heldSlots, myHold };
+        } catch (error) {
+            console.error('Error getting slot status batch:', error);
+            return { bookedSlots: [], heldSlots: [], myHold: null };
+        }
+    }
+
     // --- Mappers ---
 
     private mapToRegistrationData(dbRow: any): RegistrationData {
