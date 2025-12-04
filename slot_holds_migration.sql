@@ -40,5 +40,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 7. Reload schema
+-- 7. Enable real-time for instant updates across devices
+-- First, check if publication exists and drop it to recreate
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime;
+
+-- Add tables to real-time publication
+ALTER PUBLICATION supabase_realtime ADD TABLE slot_holds;
+ALTER PUBLICATION supabase_realtime ADD TABLE registrations;
+
+-- 8. Reload schema
 NOTIFY pgrst, 'reload schema';

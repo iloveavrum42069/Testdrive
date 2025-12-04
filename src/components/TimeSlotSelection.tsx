@@ -4,6 +4,7 @@ import { Calendar, Clock, ChevronLeft, AlertCircle, Timer } from 'lucide-react';
 import { getPageSettings } from './PageEditor';
 import { formatDateDisplay } from '../utils/formatters';
 import { storageService } from '../services/storageService';
+import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
 interface TimeSlotSelectionProps {
@@ -71,12 +72,57 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
     setHeldSlots(held);
   }, [date, car.id, timeSlots, sessionId]);
 
+  // Real-time subscriptions for instant updates across devices
   useEffect(() => {
+    if (!date || !car.id) return;
+
+    // Subscribe to slot_holds changes
+    const holdsChannel = supabase
+      .channel('slot_holds_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slot_holds',
+          filter: `car_id=eq.${car.id}`,
+        },
+        () => {
+          // Refresh slot status when any hold changes
+          loadSlotStatus();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to registrations changes
+    const registrationsChannel = supabase
+      .channel('registrations_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'registrations',
+        },
+        () => {
+          // Refresh slot status when any registration changes
+          loadSlotStatus();
+        }
+      )
+      .subscribe();
+
+    // Initial load
     loadSlotStatus();
-    // Refresh every 10 seconds
-    const interval = setInterval(loadSlotStatus, 10000);
-    return () => clearInterval(interval);
-  }, [loadSlotStatus]);
+
+    // Backup polling every 30 seconds (in case real-time fails)
+    const interval = setInterval(loadSlotStatus, 30000);
+
+    return () => {
+      supabase.removeChannel(holdsChannel);
+      supabase.removeChannel(registrationsChannel);
+      clearInterval(interval);
+    };
+  }, [date, car.id, loadSlotStatus]);
 
   // Countdown timer for hold
   useEffect(() => {
@@ -232,14 +278,14 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
                     onClick={() => !unavailable && handleSlotSelect(slot)}
                     disabled={unavailable || isCreatingHold}
                     className={`p-3 rounded-lg border-2 transition-all duration-200 relative transform ${booked
-                        ? 'border-red-200 bg-red-50 text-red-400 cursor-not-allowed opacity-60'
-                        : heldByOther
-                          ? 'border-orange-200 bg-orange-50 text-orange-400 cursor-not-allowed opacity-60'
-                          : isMyHold
-                            ? 'border-green-600 bg-gradient-to-br from-green-50 to-green-100 text-green-700 shadow-lg ring-2 ring-green-200 scale-105'
-                            : timeSlot === slot
-                              ? 'border-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 shadow-lg ring-2 ring-blue-200 scale-105'
-                              : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md hover:scale-105 active:scale-95'
+                      ? 'border-red-200 bg-red-50 text-red-400 cursor-not-allowed opacity-60'
+                      : heldByOther
+                        ? 'border-orange-200 bg-orange-50 text-orange-400 cursor-not-allowed opacity-60'
+                        : isMyHold
+                          ? 'border-green-600 bg-gradient-to-br from-green-50 to-green-100 text-green-700 shadow-lg ring-2 ring-green-200 scale-105'
+                          : timeSlot === slot
+                            ? 'border-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 shadow-lg ring-2 ring-blue-200 scale-105'
+                            : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md hover:scale-105 active:scale-95'
                       }`}
                   >
                     {slot}
