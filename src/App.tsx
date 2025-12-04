@@ -12,6 +12,7 @@ import { getPageSettings, DEFAULT_SETTINGS } from './components/PageEditor';
 import { Toaster } from './components/ui/sonner';
 import { storageService } from './services/storageService';
 import { pdfService } from './services/pdfService';
+import { authService } from './services/authService';
 
 export interface Car {
   id: string;
@@ -61,8 +62,34 @@ export default function App() {
   const [registrationData, setRegistrationData] = useState<RegistrationData>({});
   const [view, setView] = useState<'registration' | 'admin-login' | 'admin-dashboard'>('registration');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [pageSettings, setPageSettings] = useState(DEFAULT_SETTINGS);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
+
+  // Check for existing auth session on load
+  useEffect(() => {
+    const checkAuth = async () => {
+      const session = await authService.getSession();
+      if (session) {
+        setIsAdminAuthenticated(true);
+        setView('admin-dashboard');
+      }
+      setIsAuthLoading(false);
+    };
+    checkAuth();
+
+    // Listen for auth state changes
+    const subscription = authService.onAuthStateChange((session) => {
+      setIsAdminAuthenticated(!!session);
+      if (!session && view === 'admin-dashboard') {
+        setView('registration');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -142,18 +169,13 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = async (password: string) => {
-    // Get password from settings
-    const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
-    if (password === settings.adminPassword) {
-      setIsAdminAuthenticated(true);
-      setView('admin-dashboard');
-      return true;
-    }
-    return false;
+  const handleLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    setView('admin-dashboard');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.signOut();
     setIsAdminAuthenticated(false);
     setView('registration');
   };
@@ -179,7 +201,7 @@ export default function App() {
 
         {view === 'admin-login' && (
           <AdminLogin
-            onLogin={handleAdminLogin}
+            onLoginSuccess={handleLoginSuccess}
             onBack={() => setView('registration')}
           />
         )}
