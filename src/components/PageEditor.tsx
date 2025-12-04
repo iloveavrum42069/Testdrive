@@ -1,24 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Save, RotateCcw, Clock } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import { PageSettings, Car } from '../types';
 
-export interface PageSettings {
-  heroTitle: string;
-  heroSubtitle: string;
-  eventDates: string[];
-  timeSlots: string[];
-  waiverText: string;
-  footerText: string;
-  parentalConsentText: string;
-  cars: Array<{
-    id: string;
-    name: string;
-    model: string;
-    year: number;
-    type: string;
-    image: string;
-  }>;
-}
+// Re-export for backward compatibility
+export type { PageSettings } from '../types';
 
 export const DEFAULT_SETTINGS: PageSettings = {
   heroTitle: 'Traxion Events',

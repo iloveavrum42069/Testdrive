@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { RegistrationData } from '../App';
-import { PageSettings } from '../components/PageEditor';
+import { RegistrationData, PageSettings, DbRegistration, DbSettings } from '../types';
 import { toast } from 'sonner';
 
 export class SupabaseStorageService {
@@ -425,7 +424,7 @@ export class SupabaseStorageService {
 
     // --- Mappers ---
 
-    private mapToRegistrationData(dbRow: any): RegistrationData {
+    private mapToRegistrationData(dbRow: DbRegistration): RegistrationData {
         return {
             registrationId: dbRow.registration_id,
             firstName: dbRow.first_name,
@@ -448,7 +447,7 @@ export class SupabaseStorageService {
         };
     }
 
-    private mapToDbRegistration(data: RegistrationData): any {
+    private mapToDbRegistration(data: RegistrationData): Partial<DbRegistration> {
         return {
             registration_id: data.registrationId,
             first_name: data.firstName,
@@ -471,8 +470,8 @@ export class SupabaseStorageService {
         };
     }
 
-    private mapToDbUpdates(updates: Partial<RegistrationData>): any {
-        const dbUpdates: any = {};
+    private mapToDbUpdates(updates: Partial<RegistrationData>): Partial<DbRegistration> {
+        const dbUpdates: Partial<DbRegistration> = {};
         if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
         if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
         if (updates.email !== undefined) dbUpdates.email = updates.email;
@@ -492,7 +491,7 @@ export class SupabaseStorageService {
         return dbUpdates;
     }
 
-    private mapToPageSettings(dbRow: any): PageSettings {
+    private mapToPageSettings(dbRow: DbSettings): PageSettings {
         return {
             heroTitle: dbRow.hero_title,
             heroSubtitle: dbRow.hero_subtitle,

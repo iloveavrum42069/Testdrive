@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CarSelection } from './components/CarSelection';
 import { TimeSlotSelection } from './components/TimeSlotSelection';
@@ -7,7 +7,8 @@ import { WaiverSignature } from './components/WaiverSignature';
 import { Confirmation } from './components/Confirmation';
 import { ProgressIndicator } from './components/ProgressIndicator';
 import { AdminLogin } from './components/AdminLogin';
-import { AdminDashboard } from './components/AdminDashboard';
+// Lazy load AdminDashboard to reduce initial bundle size
+const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 import { getPageSettings, DEFAULT_SETTINGS } from './components/PageEditor';
 import { Toaster } from './components/ui/sonner';
 import { storageService } from './services/storageService';
@@ -15,49 +16,10 @@ import { pdfService } from './services/pdfService';
 import { authService } from './services/authService';
 import { supabase } from './lib/supabase';
 import { toast } from 'sonner';
+import { Car, Passenger, RegistrationData } from './types';
 
-export interface Car {
-  id: string;
-  name: string;
-  model: string;
-  year: number;
-  type: string;
-  image: string;
-}
-
-export interface Passenger {
-  name: string;
-  isOver18: boolean;
-  meetsRequirements: boolean;
-  signature?: string;
-  parentalConsentSignature?: string;
-  guardianRelationship?: 'parent' | 'guardian';
-  guardianName?: string;
-  agreedToWaiver?: boolean;
-  agreedToParentalConsent?: boolean;
-}
-
-export interface RegistrationData {
-  car?: Car;
-  date?: string;
-  timeSlot?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  hasValidLicense?: boolean;
-  additionalPassengers?: Passenger[];
-  signature?: string;
-  registrationId?: string;
-  registeredAt?: string;
-  completed?: boolean;
-  communicationOptIn?: boolean;
-  licenseVerified?: boolean;
-  licenseVerifiedBy?: string;
-  licenseVerifiedAt?: string;
-  agreedToTOS?: boolean;
-  waiverPdfUrl?: string;
-}
+// Re-export types for backward compatibility
+export type { Car, Passenger, RegistrationData } from './types';
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -234,7 +196,13 @@ export default function App() {
         )}
 
         {view === 'admin-dashboard' && (
-          <AdminDashboard onLogout={handleLogout} />
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          }>
+            <AdminDashboard onLogout={handleLogout} />
+          </Suspense>
         )}
 
         {view === 'registration' && (
