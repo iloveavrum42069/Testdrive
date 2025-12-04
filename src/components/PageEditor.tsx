@@ -257,51 +257,54 @@ export function PageEditor({ onSave }: PageEditorProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-slate-900 mb-1">Page Editor</h2>
-            <p className="text-slate-600">Customize all aspects of the registration page</p>
+            <p className="text-slate-600 text-sm sm:text-base">Customize all aspects of the registration page</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={resetToDefaults}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm flex-1 sm:flex-none"
             >
               <RotateCcw className="w-4 h-4" />
-              Reset to Defaults
+              <span className="hidden sm:inline">Reset to Defaults</span>
+              <span className="sm:hidden">Reset</span>
             </button>
             <button
               onClick={saveSettings}
               disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-sm flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-slate-200">
-          {[
-            { id: 'general', label: 'General' },
-            { id: 'schedule', label: 'Schedule' },
-            { id: 'cars', label: 'Vehicles' },
-            { id: 'waiver', label: 'Waiver' },
-            { id: 'security', label: 'Security' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2 border-b-2 transition-colors ${activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Tabs - Scrollable on mobile */}
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 mb-6">
+          <div className="flex gap-1 sm:gap-2 border-b border-slate-200 min-w-max">
+            {[
+              { id: 'general', label: 'General' },
+              { id: 'schedule', label: 'Schedule' },
+              { id: 'cars', label: 'Vehicles' },
+              { id: 'waiver', label: 'Waiver' },
+              { id: 'security', label: 'Security' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3 sm:px-4 py-2 border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* General Tab */}

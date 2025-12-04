@@ -295,11 +295,11 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                 </button>
               )}
             </div>
-            <div className="border-2 border-slate-300 rounded-lg bg-white">
+            <div className="border-2 border-slate-300 rounded-lg bg-white overflow-hidden">
               <canvas
                 ref={mainCanvasRef}
-                width={800}
-                height={200}
+                width={600}
+                height={150}
                 onMouseDown={(e) => startDrawing(e, mainCanvasRef)}
                 onMouseMove={(e) => draw(e, mainCanvasRef)}
                 onMouseUp={stopDrawing}
@@ -307,7 +307,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                 onTouchStart={(e) => startDrawing(e, mainCanvasRef)}
                 onTouchMove={(e) => draw(e, mainCanvasRef)}
                 onTouchEnd={stopDrawing}
-                className="w-full touch-none cursor-crosshair"
+                className="w-full h-32 sm:h-40 touch-none cursor-crosshair"
                 style={{ touchAction: 'none' }}
               />
             </div>
@@ -413,13 +413,13 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                       </button>
                     )}
                   </div>
-                  <div className="border-2 border-slate-300 rounded-lg bg-white">
+                  <div className="border-2 border-slate-300 rounded-lg bg-white overflow-hidden">
                     <canvas
                       ref={(el) => {
                         if (el) passengerCanvasRefs.current.set(index, el);
                       }}
-                      width={800}
-                      height={150}
+                      width={600}
+                      height={120}
                       onMouseDown={(e) => {
                         const canvas = passengerCanvasRefs.current.get(index);
                         if (canvas) {
@@ -451,7 +451,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                         }
                       }}
                       onTouchEnd={stopDrawing}
-                      className="w-full touch-none cursor-crosshair"
+                      className="w-full h-28 sm:h-32 touch-none cursor-crosshair"
                       style={{ touchAction: 'none' }}
                     />
                   </div>
@@ -509,13 +509,13 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                           </button>
                         )}
                       </div>
-                      <div className="border-2 border-slate-300 rounded-lg bg-white">
+                      <div className="border-2 border-slate-300 rounded-lg bg-white overflow-hidden">
                         <canvas
                           ref={(el) => {
                             if (el) parentalConsentCanvasRefs.current.set(index, el);
                           }}
-                          width={800}
-                          height={150}
+                          width={600}
+                          height={120}
                           onMouseDown={(e) => {
                             const canvas = parentalConsentCanvasRefs.current.get(index);
                             if (canvas) {
@@ -547,7 +547,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                             }
                           }}
                           onTouchEnd={stopDrawing}
-                          className="w-full touch-none cursor-crosshair"
+                          className="w-full h-28 sm:h-32 touch-none cursor-crosshair"
                           style={{ touchAction: 'none' }}
                         />
                       </div>
