@@ -3,29 +3,30 @@
 ## 1. Install Supabase CLI (if not installed)
 ```bash
 npm install -g supabase
+# OR use npx (no install needed)
 ```
 
 ## 2. Login to Supabase
 ```bash
-supabase login
+npx supabase login
 ```
 
 ## 3. Link your project
 ```bash
-supabase link --project-ref YOUR_PROJECT_REF
+npx supabase link --project-ref YOUR_PROJECT_REF
 ```
 (Find your project ref in Supabase Dashboard URL: `supabase.com/dashboard/project/PROJECT_REF`)
 
 ## 4. Set Twilio secrets
 ```bash
-supabase secrets set TWILIO_ACCOUNT_SID=your_sid_here
-supabase secrets set TWILIO_AUTH_TOKEN=your_token_here  
-supabase secrets set TWILIO_PHONE_NUMBER=your_twilio_number_here
+npx supabase secrets set TWILIO_ACCOUNT_SID=your_sid_here
+npx supabase secrets set TWILIO_AUTH_TOKEN=your_token_here  
+npx supabase secrets set TWILIO_PHONE_NUMBER=your_twilio_number_here
 ```
 
 ## 5. Deploy the Edge Function
 ```bash
-supabase functions deploy send-sms
+npx supabase functions deploy send-sms --no-verify-jwt
 ```
 
 ## Done!

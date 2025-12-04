@@ -122,3 +122,6 @@ Thumbs.db
 
 # Build directory
 build/
+
+# Supabase temp
+supabase/.temp/
