@@ -39,9 +39,15 @@ export class SupabaseStorageService {
 
             if (error) throw error;
             return true;
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error adding registration:', error);
-            toast.error('Failed to save registration');
+            // Check for rate limit error
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('Rate limit exceeded')) {
+                toast.error('This email was already used to register recently. Please wait an hour or use a different email.');
+            } else {
+                toast.error('Failed to save registration');
+            }
             return false;
         }
     }

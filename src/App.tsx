@@ -150,6 +150,22 @@ export default function App() {
       return false;
     }
 
+    // Send confirmation SMS (non-blocking, don't fail registration if SMS fails)
+    if (data.phone && data.firstName && data.date && data.timeSlot && data.car) {
+      import('./services/smsService').then(({ smsService }) => {
+        smsService.sendConfirmationSms({
+          phone: data.phone!,
+          firstName: data.firstName!,
+          lastName: data.lastName || '',
+          date: data.date!,
+          time: data.timeSlot!,
+          carName: `${data.car!.name} ${data.car!.model}`,
+        });
+      }).catch(err => console.error('SMS service load error:', err));
+    } else {
+      // console.warn('Skipping SMS: Missing required data fields'); // Removed debug log
+    }
+
     // Release the hold after successful booking
     if (data.car?.id && data.date && data.timeSlot) {
       await storageService.releaseSlotHold(data.car.id, data.date, data.timeSlot, sessionId);
