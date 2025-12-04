@@ -48,6 +48,7 @@ CREATE PUBLICATION supabase_realtime;
 -- Add tables to real-time publication
 ALTER PUBLICATION supabase_realtime ADD TABLE slot_holds;
 ALTER PUBLICATION supabase_realtime ADD TABLE registrations;
+ALTER PUBLICATION supabase_realtime ADD TABLE settings;
 
 -- 8. Reload schema
 NOTIFY pgrst, 'reload schema';

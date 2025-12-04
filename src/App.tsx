@@ -13,6 +13,7 @@ import { Toaster } from './components/ui/sonner';
 import { storageService } from './services/storageService';
 import { pdfService } from './services/pdfService';
 import { authService } from './services/authService';
+import { supabase } from './lib/supabase';
 import { toast } from 'sonner';
 
 export interface Car {
@@ -101,26 +102,26 @@ export default function App() {
 
     loadSettings();
 
-    // Listen for settings changes
-    const handleStorage = async () => {
-      const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
-      setPageSettings(settings);
-    };
-    window.addEventListener('storage', handleStorage);
-
-    // Also check every 500ms if we're on the registration page
-    const interval = setInterval(async () => {
-      if (view === 'registration') {
-        const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
-        setPageSettings(settings);
-      }
-    }, 500);
+    // Listen for settings changes via Supabase real-time
+    const channel = supabase
+      .channel('settings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'settings',
+        },
+        () => {
+          loadSettings();
+        }
+      )
+      .subscribe();
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
-  }, [view]);
+  }, []);
 
   const totalSteps = 5;
 

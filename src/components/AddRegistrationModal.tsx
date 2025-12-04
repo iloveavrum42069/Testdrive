@@ -39,20 +39,14 @@ export function AddRegistrationModal({ onClose, onSave }: AddRegistrationModalPr
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
 
-  // Load booked slots when car or date changes
+  // Load booked slots when car or date changes (optimized - only 2 DB queries)
   useEffect(() => {
     const loadBookedSlots = async () => {
       if (formData.carId && formData.date) {
-        const registrations = await storageService.getRegistrations();
-        const booked = new Set<string>();
-
-        registrations.forEach(reg => {
-          if (reg.car?.id === formData.carId && reg.date === formData.date) {
-            booked.add(reg.timeSlot || '');
-          }
-        });
-
-        setBookedSlots(booked);
+        const status = await storageService.getSlotStatusBatch(formData.carId, formData.date, 'admin');
+        // Combine booked and held slots for admin view
+        const allUnavailable = new Set([...status.bookedSlots, ...status.heldSlots]);
+        setBookedSlots(allUnavailable);
       }
     };
     loadBookedSlots();
