@@ -13,6 +13,7 @@ import { Toaster } from './components/ui/sonner';
 import { storageService } from './services/storageService';
 import { pdfService } from './services/pdfService';
 import { authService } from './services/authService';
+import { toast } from 'sonner';
 
 export interface Car {
   id: string;
@@ -65,6 +66,7 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [pageSettings, setPageSettings] = useState(DEFAULT_SETTINGS);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   // Check for existing auth session on load
   useEffect(() => {
@@ -136,13 +138,29 @@ export default function App() {
     setRegistrationData({ ...registrationData, ...data });
   };
 
-  const resetRegistration = () => {
+  const resetRegistration = async () => {
+    // Release any held slots
+    await storageService.releaseAllHolds(sessionId);
     setDirection(-1);
     setRegistrationData({});
     setStep(1);
   };
 
-  const saveRegistration = async (data: RegistrationData) => {
+  const saveRegistration = async (data: RegistrationData): Promise<boolean> => {
+    // Final availability check before booking
+    if (data.car?.id && data.date && data.timeSlot) {
+      const availability = await storageService.checkSlotAvailableForBooking(
+        data.car.id,
+        data.date,
+        data.timeSlot
+      );
+
+      if (!availability.available) {
+        toast.error(availability.message || 'This time slot is no longer available.');
+        return false;
+      }
+    }
+
     const newRegistration = {
       ...data,
       registrationId: `TD-${Date.now()}`,
@@ -160,13 +178,21 @@ export default function App() {
       }
     } catch (error) {
       console.error('Failed to generate or upload waiver PDF:', error);
-      // Continue saving registration even if PDF fails, but log it
     }
 
     const success = await storageService.addRegistration(newRegistration);
     if (!success) {
       console.error('Failed to save registration');
+      toast.error('Failed to save registration. Please try again.');
+      return false;
     }
+
+    // Release the hold after successful booking
+    if (data.car?.id && data.date && data.timeSlot) {
+      await storageService.releaseSlotHold(data.car.id, data.date, data.timeSlot, sessionId);
+    }
+
+    return true;
   };
 
   const handleLoginSuccess = () => {
@@ -245,6 +271,7 @@ export default function App() {
                       onBack={prevStep}
                       selectedDate={registrationData.date}
                       selectedTimeSlot={registrationData.timeSlot}
+                      sessionId={sessionId}
                     />
                   )}
 
@@ -277,11 +304,16 @@ export default function App() {
 
                   {step === 4 && (
                     <WaiverSignature
-                      onNext={(signature, passengerSignatures) => {
+                      onNext={async (signature, passengerSignatures) => {
                         const completeData = { ...registrationData, signature, additionalPassengers: passengerSignatures };
                         updateData({ signature, additionalPassengers: passengerSignatures });
-                        saveRegistration(completeData);
-                        nextStep();
+                        const success = await saveRegistration(completeData);
+                        if (success) {
+                          nextStep();
+                        } else {
+                          // Go back to time slot selection if booking failed
+                          setStep(2);
+                        }
                       }}
                       onBack={prevStep}
                       signature={registrationData.signature}

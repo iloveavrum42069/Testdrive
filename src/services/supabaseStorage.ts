@@ -183,6 +183,199 @@ export class SupabaseStorageService {
         }
     }
 
+    // --- Slot Hold System ---
+
+    /**
+     * Create a temporary hold on a slot (6 minutes)
+     */
+    async createSlotHold(carId: string, date: string, timeSlot: string, sessionId: string): Promise<boolean> {
+        try {
+            // First clean up any expired holds
+            await this.cleanupExpiredHolds();
+
+            const expiresAt = new Date(Date.now() + 6 * 60 * 1000).toISOString(); // 6 minutes
+
+            const { error } = await supabase
+                .from('slot_holds')
+                .upsert({
+                    car_id: carId,
+                    date: date,
+                    time_slot: timeSlot,
+                    session_id: sessionId,
+                    expires_at: expiresAt
+                }, {
+                    onConflict: 'car_id,date,time_slot'
+                });
+
+            if (error) {
+                // If conflict, check if it's our own hold
+                if (error.code === '23505') {
+                    const existing = await this.getSlotHold(carId, date, timeSlot);
+                    if (existing?.session_id === sessionId) {
+                        // It's our hold, refresh it
+                        await supabase
+                            .from('slot_holds')
+                            .update({ expires_at: expiresAt })
+                            .eq('car_id', carId)
+                            .eq('date', date)
+                            .eq('time_slot', timeSlot);
+                        return true;
+                    }
+                    return false; // Someone else has the hold
+                }
+                throw error;
+            }
+            return true;
+        } catch (error) {
+            console.error('Error creating slot hold:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get existing hold for a slot
+     */
+    async getSlotHold(carId: string, date: string, timeSlot: string): Promise<{ session_id: string; expires_at: string } | null> {
+        try {
+            const { data, error } = await supabase
+                .from('slot_holds')
+                .select('session_id, expires_at')
+                .eq('car_id', carId)
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .gt('expires_at', new Date().toISOString())
+                .single();
+
+            if (error) return null;
+            return data;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Release a slot hold
+     */
+    async releaseSlotHold(carId: string, date: string, timeSlot: string, sessionId: string): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('slot_holds')
+                .delete()
+                .eq('car_id', carId)
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .eq('session_id', sessionId);
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error releasing slot hold:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Release all holds for a session
+     */
+    async releaseAllHolds(sessionId: string): Promise<void> {
+        try {
+            await supabase
+                .from('slot_holds')
+                .delete()
+                .eq('session_id', sessionId);
+        } catch (error) {
+            console.error('Error releasing all holds:', error);
+        }
+    }
+
+    /**
+     * Clean up expired holds
+     */
+    async cleanupExpiredHolds(): Promise<void> {
+        try {
+            await supabase
+                .from('slot_holds')
+                .delete()
+                .lt('expires_at', new Date().toISOString());
+        } catch (error) {
+            console.error('Error cleaning up expired holds:', error);
+        }
+    }
+
+    /**
+     * Check if a slot is available (not booked and not held by someone else)
+     */
+    async isSlotAvailable(carId: string, date: string, timeSlot: string, mySessionId?: string): Promise<boolean> {
+        try {
+            // Clean up expired holds first
+            await this.cleanupExpiredHolds();
+
+            // Check for existing registration
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .filter('car_data->>id', 'eq', carId);
+
+            if (registrations && registrations.length > 0) {
+                return false; // Already booked
+            }
+
+            // Check for active holds
+            const { data: holds } = await supabase
+                .from('slot_holds')
+                .select('session_id')
+                .eq('car_id', carId)
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .gt('expires_at', new Date().toISOString());
+
+            if (holds && holds.length > 0) {
+                // If there's a hold, check if it's ours
+                if (mySessionId && holds[0].session_id === mySessionId) {
+                    return true; // It's our hold
+                }
+                return false; // Someone else has the hold
+            }
+
+            return true; // Available
+        } catch (error) {
+            console.error('Error checking slot availability:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Final check before booking - ensures slot is still available
+     */
+    async checkSlotAvailableForBooking(carId: string, date: string, timeSlot: string): Promise<{ available: boolean; message?: string }> {
+        try {
+            // Check for existing registration
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .filter('car_data->>id', 'eq', carId);
+
+            if (registrations && registrations.length > 0) {
+                return {
+                    available: false,
+                    message: 'Sorry, this time slot was just booked by someone else. Please choose a different time.'
+                };
+            }
+
+            return { available: true };
+        } catch (error) {
+            console.error('Error checking slot for booking:', error);
+            return {
+                available: false,
+                message: 'Unable to verify slot availability. Please try again.'
+            };
+        }
+    }
+
     // --- Mappers ---
 
     private mapToRegistrationData(dbRow: any): RegistrationData {
