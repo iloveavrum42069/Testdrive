@@ -10,7 +10,6 @@ export interface PageSettings {
   waiverText: string;
   footerText: string;
   parentalConsentText: string;
-  adminPassword: string;
   cars: Array<{
     id: string;
     name: string;
@@ -58,7 +57,6 @@ I release the event organizers, Ford Motor Company, and all affiliated parties f
 I consent to the collection and use of my personal information for the purposes of this test drive event and future communications about Ford products and services.`,
   footerText: '© 2025 Traxion Events. All rights reserved.',
   parentalConsentText: 'I, the undersigned, am the parent or legal guardian of the minor named above. I hereby give my consent for them to participate in the test drive event as a passenger.',
-  adminPassword: 'admin123',
   cars: [
     {
       id: '1',
@@ -118,7 +116,7 @@ interface PageEditorProps {
 export function PageEditor({ onSave }: PageEditorProps) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'cars' | 'waiver' | 'security'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'cars' | 'waiver'>('general');
 
   // Time Slot Generator State
   const [genStartTime, setGenStartTime] = useState('');
@@ -291,7 +289,6 @@ export function PageEditor({ onSave }: PageEditorProps) {
               { id: 'schedule', label: 'Schedule' },
               { id: 'cars', label: 'Vehicles' },
               { id: 'waiver', label: 'Waiver' },
-              { id: 'security', label: 'Security' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -598,30 +595,6 @@ export function PageEditor({ onSave }: PageEditorProps) {
               />
               <p className="text-slate-500 text-sm mt-2">
                 This text will be displayed on the PDF for minor passengers
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Security Tab */}
-        {activeTab === 'security' && (
-          <div className="space-y-6">
-            <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-              <p className="text-amber-800 text-sm">
-                <strong>Warning:</strong> Changing the admin password will require you to use the new password on your next login.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-slate-700 mb-2">Admin Password</label>
-              <input
-                type="text"
-                value={settings.adminPassword}
-                onChange={(e) => setSettings({ ...settings, adminPassword: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
-              />
-              <p className="text-slate-500 text-sm mt-2">
-                Current password: {settings.adminPassword}
               </p>
             </div>
           </div>

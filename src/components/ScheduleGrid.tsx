@@ -7,14 +7,13 @@ import { formatDateDisplay, formatDateShort } from '../utils/formatters';
 interface ScheduleGridProps {
   registrations: RegistrationData[];
   onSelectBooking: (registration: RegistrationData) => void;
-  onDeleteBooking: (registrationId: string) => void;
 }
 
 export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridProps) {
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const [cars, setCars] = useState<string[]>([]);
   const [eventDates, setEventDates] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState('2025-12-05');
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedCar, setSelectedCar] = useState<string | null>(null);
 
   useEffect(() => {
