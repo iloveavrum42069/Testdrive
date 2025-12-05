@@ -124,6 +124,25 @@ npx supabase functions deploy send-sms --no-verify-jwt
 
 ---
 
+## Super Admin Access
+
+To access the "Page Editor" tab, a user must have the `super_admin` role.
+
+### Method 1: Supabase Dashboard (UI)
+1. Go to Authentication -> Users
+2. Edit User -> Metadata
+3. Add: `{"role": "super_admin"}`
+4. Save User
+
+### Method 2: SQL Editor
+```sql
+UPDATE auth.users
+SET raw_user_meta_data = raw_user_meta_data || '{"role": "super_admin"}'
+WHERE email = 'your_email@example.com';
+```
+
+---
+
 ## Security
 
 - Row Level Security (RLS) on all tables
