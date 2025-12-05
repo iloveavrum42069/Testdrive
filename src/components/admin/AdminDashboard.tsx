@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
 import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
@@ -11,6 +11,7 @@ import { RegistrationList } from './dashboard/RegistrationList';
 import { RegistrationDetailModal } from './dashboard/RegistrationDetailModal';
 import { LicenseVerificationModal } from './dashboard/LicenseVerificationModal';
 import { smsService } from '../../services/smsService';
+import { authService } from '../../services/authService';
 import { formatDateLong } from '../../utils/formatters';
 import { toast } from 'sonner';
 
@@ -32,6 +33,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [viewMode, setViewMode] = useState<'list' | 'schedule' | 'editor'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Check for super_admin role
+  useEffect(() => {
+    const checkRole = async () => {
+      const user = await authService.getUser();
+      if (user?.user_metadata?.role === 'super_admin') {
+        setIsSuperAdmin(true);
+      }
+    };
+    checkRole();
+  }, []);
 
   const filteredRegistrations = registrations.filter(r => {
     const searchLower = searchTerm.toLowerCase();
@@ -157,15 +170,20 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <span className="hidden sm:inline">Schedule View</span>
               <span className="sm:hidden">Schedule</span>
             </button>
-            <button
-              onClick={() => setViewMode('editor')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'editor' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                }`}
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Page Editor</span>
-              <span className="sm:hidden">Editor</span>
-            </button>
+
+            {/* Only show Page Editor to super_admin */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => setViewMode('editor')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'editor' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                  }`}
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">Page Editor</span>
+                <span className="sm:hidden">Editor</span>
+              </button>
+            )}
+
             <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
@@ -192,7 +210,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           />
         )}
 
-        {viewMode === 'editor' && (
+        {viewMode === 'editor' && isSuperAdmin && (
           <PageEditor />
         )}
       </div>
