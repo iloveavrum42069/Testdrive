@@ -56,6 +56,9 @@ export interface PageSettings {
     footerText: string;
     parentalConsentText: string;
     cars: Car[];
+    // Completion SMS settings
+    completionSmsEnabled: boolean;
+    completionSmsMessage: string;
 }
 
 // ============= Database Row Types =============

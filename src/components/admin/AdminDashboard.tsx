@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { RegistrationData } from '../../App';
 import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
-import { PageEditor } from './PageEditor';
+import { PageEditor, getPageSettings } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
 import { useRegistrations } from '../../hooks/useRegistrations';
 import { exportToCSV } from '../../utils/csvExport';
@@ -10,6 +10,9 @@ import { StatsCards } from './dashboard/StatsCards';
 import { RegistrationList } from './dashboard/RegistrationList';
 import { RegistrationDetailModal } from './dashboard/RegistrationDetailModal';
 import { LicenseVerificationModal } from './dashboard/LicenseVerificationModal';
+import { smsService } from '../../services/smsService';
+import { formatDateLong } from '../../utils/formatters';
+import { toast } from 'sonner';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -47,10 +50,37 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleToggleComplete = (id: string) => {
-    const updated = toggleComplete(id);
+  const handleToggleComplete = async (id: string) => {
+    const registration = registrations.find(r => r.registrationId === id);
+    const wasCompleted = registration?.completed;
+
+    const updated = await toggleComplete(id);
     if (selectedRegistration?.registrationId === id && updated) {
       setSelectedRegistration(updated);
+    }
+
+    // Send completion SMS if marking as complete (not incomplete) and feature is enabled
+    if (!wasCompleted && updated?.completed && registration?.phone) {
+      try {
+        const settings = await getPageSettings();
+        if (settings.completionSmsEnabled && settings.completionSmsMessage) {
+          const success = await smsService.sendCompletionSms({
+            phone: registration.phone,
+            messageTemplate: settings.completionSmsMessage,
+            firstName: registration.firstName || '',
+            lastName: registration.lastName || '',
+            carName: registration.car ? `${registration.car.name} ${registration.car.model}` : '',
+            date: registration.date ? formatDateLong(registration.date) : '',
+            time: registration.timeSlot || '',
+          });
+
+          if (success) {
+            toast.success('Completion SMS sent!');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send completion SMS:', error);
+      }
     }
   };
 

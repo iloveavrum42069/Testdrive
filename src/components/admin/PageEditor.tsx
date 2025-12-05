@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw, Clock } from 'lucide-react';
+import { Save, RotateCcw, Clock, MessageSquare } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { PageSettings, Car } from '../../types';
 
@@ -93,6 +93,9 @@ I consent to the collection and use of my personal information for the purposes 
       image: 'https://images.unsplash.com/photo-1609361528533-6731d909ab6a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     },
   ],
+  // Completion SMS settings
+  completionSmsEnabled: false,
+  completionSmsMessage: 'Hi {firstName}! Thanks for test driving the {carName} with Traxion Events! We hope you enjoyed the experience.',
 };
 
 interface PageEditorProps {
@@ -102,7 +105,7 @@ interface PageEditorProps {
 export function PageEditor({ onSave }: PageEditorProps) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'cars' | 'waiver'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'cars' | 'waiver' | 'sms'>('general');
 
   // Time Slot Generator State
   const [genStartTime, setGenStartTime] = useState('');
@@ -275,6 +278,7 @@ export function PageEditor({ onSave }: PageEditorProps) {
               { id: 'schedule', label: 'Schedule' },
               { id: 'cars', label: 'Vehicles' },
               { id: 'waiver', label: 'Waiver' },
+              { id: 'sms', label: 'SMS' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -583,6 +587,94 @@ export function PageEditor({ onSave }: PageEditorProps) {
                 This text will be displayed on the PDF for minor passengers
               </p>
             </div>
+          </div>
+        )}
+
+        {/* SMS Settings Tab */}
+        {activeTab === 'sms' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <MessageSquare className="w-6 h-6 text-green-600 mt-1" />
+                <div className="flex-1">
+                  <h4 className="text-slate-900 font-semibold mb-2">Completion SMS</h4>
+                  <p className="text-slate-600 text-sm mb-4">
+                    Send an automatic SMS to customers when you mark their test drive as complete.
+                  </p>
+
+                  {/* Toggle Switch */}
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={settings.completionSmsEnabled ?? false}
+                        onChange={(e) => setSettings({ ...settings, completionSmsEnabled: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={`w-14 h-8 rounded-full transition-colors ${settings.completionSmsEnabled ? 'bg-green-600' : 'bg-slate-300'
+                        }`}></div>
+                      <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${settings.completionSmsEnabled ? 'translate-x-6' : ''
+                        }`}></div>
+                    </div>
+                    <span className={`font-medium ${settings.completionSmsEnabled ? 'text-green-700' : 'text-slate-600'}`}>
+                      {settings.completionSmsEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Message Template */}
+            <div className={`transition-opacity ${settings.completionSmsEnabled ? 'opacity-100' : 'opacity-50'}`}>
+              <label className="block text-slate-700 mb-2 font-medium">Message Template</label>
+              <textarea
+                value={settings.completionSmsMessage ?? ''}
+                onChange={(e) => setSettings({ ...settings, completionSmsMessage: e.target.value })}
+                disabled={!settings.completionSmsEnabled}
+                rows={4}
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
+                placeholder="Enter your completion message..."
+              />
+
+              {/* Placeholder Help */}
+              <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <p className="text-slate-700 text-sm font-medium mb-2">Available Placeholders:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['{firstName}', '{lastName}', '{carName}', '{date}', '{time}'].map((placeholder) => (
+                    <code
+                      key={placeholder}
+                      className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm cursor-pointer hover:bg-blue-200 transition-colors"
+                      onClick={() => {
+                        if (settings.completionSmsEnabled) {
+                          setSettings({
+                            ...settings,
+                            completionSmsMessage: (settings.completionSmsMessage ?? '') + placeholder
+                          });
+                        }
+                      }}
+                    >
+                      {placeholder}
+                    </code>
+                  ))}
+                </div>
+                <p className="text-slate-500 text-xs mt-2">Click a placeholder to add it to your message</p>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {settings.completionSmsEnabled && (
+              <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4">
+                <p className="text-slate-700 text-sm font-medium mb-2">Preview (example):</p>
+                <p className="text-slate-900 text-sm italic">
+                  "{(settings.completionSmsMessage ?? '')
+                    .replace('{firstName}', 'John')
+                    .replace('{lastName}', 'Doe')
+                    .replace('{carName}', 'Ford Mustang Mach-E')
+                    .replace('{date}', 'Dec 5, 2025')
+                    .replace('{time}', '2:00 PM')}"
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

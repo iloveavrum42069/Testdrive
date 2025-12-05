@@ -18,7 +18,7 @@ serve(async (req) => {
     }
 
     try {
-        const { phone, firstName, lastName, date, time, carName } = await req.json()
+        const { phone, firstName, lastName, date, time, carName, customMessage } = await req.json()
 
         // Format phone number (remove non-digits, ensure +1 prefix for North America)
         let formattedPhone = phone.replace(/\D/g, '')
@@ -28,8 +28,8 @@ serve(async (req) => {
             formattedPhone = '+' + formattedPhone
         }
 
-        // Compose SMS message (Shortened for Trial Account)
-        const message = `Confirmed: Test drive for ${carName} on ${date} at ${time}. Please bring your license.`
+        // Use custom message if provided (completion SMS), otherwise compose confirmation message
+        const message = customMessage || `Confirmed: Test drive for ${carName} on ${date} at ${time}. Please bring your license.`
 
         // Send via Twilio API
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
