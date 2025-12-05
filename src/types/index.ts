@@ -98,16 +98,6 @@ export interface DbSettings {
     cars: Car[];
 }
 
-export interface DbSlotHold {
-    id: string;
-    car_id: string;
-    date: string;
-    time_slot: string;
-    session_id: string;
-    created_at: string;
-    expires_at: string;
-}
-
 // ============= Slot Status Types =============
 
 export interface SlotStatusBatch {
