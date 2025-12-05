@@ -602,16 +602,25 @@ export function PageEditor({ onSave }: PageEditorProps) {
                     Send an automatic SMS to customers when you mark their test drive as complete.
                   </p>
 
-                  {/* Toggle Switch */}
+                  {/* Toggle Switch - Enhanced with smooth animations */}
                   <button
                     type="button"
                     onClick={() => setSettings({ ...settings, completionSmsEnabled: !settings.completionSmsEnabled })}
-                    className="inline-flex items-center gap-3"
+                    className="group inline-flex items-center gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200"
                   >
-                    <div className={`relative w-14 h-8 rounded-full transition-colors ${settings.completionSmsEnabled ? 'bg-green-600' : 'bg-slate-300'}`}>
-                      <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${settings.completionSmsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl ${settings.completionSmsEnabled ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-slate-300 to-slate-400'}`}>
+                      <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ease-out flex items-center justify-center ${settings.completionSmsEnabled ? 'translate-x-6 scale-110' : 'translate-x-0 scale-100'}`}>
+                        {/* Animated checkmark or x icon */}
+                        <div className={`transition-all duration-200 ${settings.completionSmsEnabled ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}>
+                          <svg className="w-3 h-3 text-green-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                      {/* Animated glow effect */}
+                      <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-300 ${settings.completionSmsEnabled ? 'opacity-50 bg-green-400' : 'opacity-0'}`}></div>
                     </div>
-                    <span className={`font-medium ${settings.completionSmsEnabled ? 'text-green-700' : 'text-slate-600'}`}>
+                    <span className={`font-semibold transition-all duration-300 group-hover:translate-x-1 ${settings.completionSmsEnabled ? 'text-green-700' : 'text-slate-600'}`}>
                       {settings.completionSmsEnabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </button>
