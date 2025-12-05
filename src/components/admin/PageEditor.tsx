@@ -603,21 +603,18 @@ export function PageEditor({ onSave }: PageEditorProps) {
                   </p>
 
                   {/* Toggle Switch */}
-                  <label className="inline-flex items-center gap-3 cursor-pointer">
-                    <div className="relative inline-block">
-                      <input
-                        type="checkbox"
-                        checked={settings.completionSmsEnabled ?? false}
-                        onChange={(e) => setSettings({ ...settings, completionSmsEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className={`w-14 h-8 rounded-full transition-colors ${settings.completionSmsEnabled ? 'bg-green-600' : 'bg-slate-300'}`}></div>
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, completionSmsEnabled: !settings.completionSmsEnabled })}
+                    className="inline-flex items-center gap-3"
+                  >
+                    <div className={`relative w-14 h-8 rounded-full transition-colors ${settings.completionSmsEnabled ? 'bg-green-600' : 'bg-slate-300'}`}>
                       <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${settings.completionSmsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                     </div>
                     <span className={`font-medium ${settings.completionSmsEnabled ? 'text-green-700' : 'text-slate-600'}`}>
                       {settings.completionSmsEnabled ? 'Enabled' : 'Disabled'}
                     </span>
-                  </label>
+                  </button>
                 </div>
               </div>
             </div>
