@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { RegistrationData } from '../../App';
+import { RegistrationData } from '../../../App';
 
 interface LicenseVerificationModalProps {
     registration: RegistrationData;

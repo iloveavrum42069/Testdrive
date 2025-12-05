@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, ChevronLeft, AlertCircle, Loader2, Mail } from 'lucide-react';
-import { authService } from '../services/authService';
+import { authService } from '../../services/authService';
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;

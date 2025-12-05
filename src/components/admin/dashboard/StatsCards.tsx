@@ -1,6 +1,6 @@
 import { Calendar, BellRing, TrendingUp } from 'lucide-react';
-import { RegistrationData } from '../../App';
-import { formatDate } from '../../utils/formatters';
+import { RegistrationData } from '../../../App';
+import { formatDate } from '../../../utils/formatters';
 
 interface StatsCardsProps {
     registrations: RegistrationData[];

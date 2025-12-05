@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, User, Mail, Phone, Plus, X, Users, Check } from 'lucide-react';
-import { TermsOfServiceModal } from './TermsOfServiceModal';
-import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { TermsOfServiceModal } from '../shared/TermsOfServiceModal';
+import { PrivacyPolicyModal } from '../shared/PrivacyPolicyModal';
 
 interface Passenger {
   name: string;
@@ -51,7 +51,7 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
   // Validation states
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
-  
+
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPhoneValid = phone.length >= 10;
 
@@ -87,12 +87,12 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate that all passengers have names and checked requirements
-    const allPassengersValid = additionalPassengers.every(passenger => 
+    const allPassengersValid = additionalPassengers.every(passenger =>
       passenger.name.trim() !== '' && (passenger.isOver18 || passenger.meetsRequirements)
     );
-    
+
     if (firstName && lastName && isEmailValid && isPhoneValid && agreedToTOS && hasValidLicense && allPassengersValid) {
       onNext({ firstName, lastName, email, phone, agreedToTOS, optInMarketing, hasValidLicense, additionalPassengers });
     }
@@ -154,11 +154,10 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${
-              emailTouched && !isEmailValid
+            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${emailTouched && !isEmailValid
                 ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
                 : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
-            }`}
+              }`}
             placeholder="john.doe@example.com"
             onBlur={() => setEmailTouched(true)}
           />
@@ -181,11 +180,10 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required
-            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${
-              phoneTouched && !isPhoneValid
+            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${phoneTouched && !isPhoneValid
                 ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
                 : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
-            }`}
+              }`}
             placeholder="(555) 123-4567"
             onBlur={() => setPhoneTouched(true)}
           />
@@ -209,9 +207,9 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
             />
             <label htmlFor="agreedToTOS" className="text-slate-700 text-sm cursor-pointer">
               I agree to the{' '}
-              <a 
-                href="#" 
-                className="text-blue-600 hover:underline" 
+              <a
+                href="#"
+                className="text-blue-600 hover:underline"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowTOSModal(true);
@@ -220,9 +218,9 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a 
-                href="#" 
-                className="text-blue-600 hover:underline" 
+              <a
+                href="#"
+                className="text-blue-600 hover:underline"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowPrivacyModal(true);
@@ -328,22 +326,20 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
                       <button
                         type="button"
                         onClick={() => updatePassengerAge(index, true)}
-                        className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${
-                          passenger.isOver18
+                        className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${passenger.isOver18
                             ? 'border-blue-600 bg-blue-50 text-blue-700'
                             : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
-                        }`}
+                          }`}
                       >
                         Yes
                       </button>
                       <button
                         type="button"
                         onClick={() => updatePassengerAge(index, false)}
-                        className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${
-                          !passenger.isOver18
+                        className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${!passenger.isOver18
                             ? 'border-blue-600 bg-blue-50 text-blue-700'
                             : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
-                        }`}
+                          }`}
                       >
                         No
                       </button>

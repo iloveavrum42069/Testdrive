@@ -1,6 +1,6 @@
 import { Car, Calendar, Clock, User, Mail, Phone, CheckCircle, BellRing, ShieldCheck, Users, Trash2, Download } from 'lucide-react';
-import { RegistrationData } from '../../App';
-import { formatDate, formatDateTime } from '../../utils/formatters';
+import { RegistrationData } from '../../../App';
+import { formatDate, formatDateTime } from '../../../utils/formatters';
 
 interface RegistrationDetailModalProps {
     registration: RegistrationData;

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, X, Check } from 'lucide-react';
-import { getPageSettings } from './PageEditor';
-import { Passenger } from '../App';
+import { getPageSettings } from '../admin/PageEditor';
+import { Passenger } from '../../App';
 
 interface WaiverSignatureProps {
   onNext: (signature: string, passengers: Passenger[]) => void;

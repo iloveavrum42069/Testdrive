@@ -1,6 +1,6 @@
 import { User, ShieldCheck, Car, Calendar, Trash2 } from 'lucide-react';
-import { RegistrationData } from '../../App';
-import { formatDate, formatDateTime } from '../../utils/formatters';
+import { RegistrationData } from '../../../App';
+import { formatDate, formatDateTime } from '../../../utils/formatters';
 
 interface RegistrationListProps {
     registrations: RegistrationData[];
@@ -23,8 +23,8 @@ export function RegistrationList({ registrations, onSelect, onDelete }: Registra
                 <div
                     key={registration.registrationId}
                     className={`border-2 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer ${registration.completed
-                            ? 'border-green-300 bg-green-50'
-                            : 'border-slate-200'
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-slate-200'
                         }`}
                     onClick={() => onSelect(registration)}
                 >

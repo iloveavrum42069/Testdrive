@@ -1,6 +1,6 @@
-import { RegistrationData } from '../App';
+import { RegistrationData } from '../../App';
 import { CheckCircle2, Calendar, Clock, Car, User, Mail, Phone, Users, CheckCircle } from 'lucide-react';
-import { formatDateLong } from '../utils/formatters';
+import { formatDateLong } from '../../utils/formatters';
 
 interface ConfirmationProps {
   data: RegistrationData;

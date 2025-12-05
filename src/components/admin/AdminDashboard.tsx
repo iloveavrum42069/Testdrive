@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { RegistrationData } from '../App';
+import { RegistrationData } from '../../App';
 import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
-import { useRegistrations } from '../hooks/useRegistrations';
-import { exportToCSV } from '../utils/csvExport';
+import { useRegistrations } from '../../hooks/useRegistrations';
+import { exportToCSV } from '../../utils/csvExport';
 import { StatsCards } from './dashboard/StatsCards';
 import { RegistrationList } from './dashboard/RegistrationList';
 import { RegistrationDetailModal } from './dashboard/RegistrationDetailModal';

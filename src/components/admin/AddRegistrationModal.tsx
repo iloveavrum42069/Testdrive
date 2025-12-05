@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
-import { RegistrationData, Car } from '../App';
+import { RegistrationData, Car } from '../../App';
 import { getPageSettings } from './PageEditor';
-import { storageService } from '../services/storageService';
+import { storageService } from '../../services/storageService';
 
 interface AddRegistrationModalProps {
   onClose: () => void;

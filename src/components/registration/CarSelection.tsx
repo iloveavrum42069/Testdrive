@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Car } from '../App';
+import { Car } from '../../App';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { getPageSettings } from './PageEditor';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { getPageSettings } from '../admin/PageEditor';
 
 interface CarSelectionProps {
   onNext: (car: Car) => void;

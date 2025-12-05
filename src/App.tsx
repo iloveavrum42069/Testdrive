@@ -1,16 +1,16 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CarSelection } from './components/CarSelection';
-import { TimeSlotSelection } from './components/TimeSlotSelection';
-import { PersonalInfo } from './components/PersonalInfo';
-import { WaiverSignature } from './components/WaiverSignature';
-import { Confirmation } from './components/Confirmation';
-import { ProgressIndicator } from './components/ProgressIndicator';
-import { AdminLogin } from './components/AdminLogin';
+import { CarSelection } from './components/registration/CarSelection';
+import { TimeSlotSelection } from './components/registration/TimeSlotSelection';
+import { PersonalInfo } from './components/registration/PersonalInfo';
+import { WaiverSignature } from './components/registration/WaiverSignature';
+import { Confirmation } from './components/registration/Confirmation';
+import { ProgressIndicator } from './components/shared/ProgressIndicator';
+import { AdminLogin } from './components/admin/AdminLogin';
 // Lazy load AdminDashboard to reduce initial bundle size
-const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-import { getPageSettings, DEFAULT_SETTINGS } from './components/PageEditor';
-import { Toaster } from './components/ui/sonner';
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+import { getPageSettings, DEFAULT_SETTINGS } from './components/admin/PageEditor';
+import { Toaster } from './components/shared/ui/sonner';
 import { storageService } from './services/storageService';
 import { pdfService } from './services/pdfService';
 import { authService } from './services/authService';

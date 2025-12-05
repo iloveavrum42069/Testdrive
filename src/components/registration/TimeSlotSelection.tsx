@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Car } from '../App';
+import { Car } from '../../App';
 import { Calendar, Clock, ChevronLeft, AlertCircle, Timer } from 'lucide-react';
-import { getPageSettings } from './PageEditor';
-import { formatDateDisplay } from '../utils/formatters';
-import { storageService } from '../services/storageService';
-import { supabase } from '../lib/supabase';
+import { getPageSettings } from '../admin/PageEditor';
+import { formatDateDisplay } from '../../utils/formatters';
+import { storageService } from '../../services/storageService';
+import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 
 interface TimeSlotSelectionProps {

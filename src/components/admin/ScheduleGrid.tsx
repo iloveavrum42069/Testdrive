@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { RegistrationData } from '../App';
+import { RegistrationData } from '../../App';
 import { Calendar, Clock, Car } from 'lucide-react';
 import { getPageSettings } from './PageEditor';
-import { formatDateDisplay, formatDateShort } from '../utils/formatters';
+import { formatDateDisplay, formatDateShort } from '../../utils/formatters';
 
 interface ScheduleGridProps {
   registrations: RegistrationData[];
