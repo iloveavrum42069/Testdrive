@@ -15,6 +15,7 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
   const [eventDates, setEventDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedCar, setSelectedCar] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -29,7 +30,44 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
     loadSettings();
   }, []);
 
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
+  const getTimePosition = () => {
+    if (timeSlots.length < 2) return null;
+
+    // Parse start time (e.g., "9:00 AM")
+    const parseTime = (timeStr: string) => {
+      const [time, period] = timeStr.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+
+    const startMinutes = parseTime(timeSlots[0]);
+    const nextMinutes = parseTime(timeSlots[1]);
+    const intervalMinutes = nextMinutes - startMinutes;
+
+    // Pixels per minute (80px column width)
+    const pxPerMinute = 80 / intervalMinutes;
+
+    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const offsetMinutes = currentMinutes - startMinutes;
+
+    // If before start time, return null (or 0 if you want it at start)
+    if (offsetMinutes < 0) return null;
+
+    // Calculate position: 200px (vehicle column) + offset
+    return 200 + (offsetMinutes * pxPerMinute);
+  };
+
+  const timeLinePosition = getTimePosition();
 
   const getBookingForSlot = (carName: string, timeSlot: string) => {
     return registrations.find(
@@ -142,13 +180,25 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
       </div>
 
       {/* Desktop View - Grid */}
-      <div className="hidden lg:block bg-white rounded-xl shadow-lg overflow-x-auto">
-        <div className="min-w-max">
+      <div className="hidden lg:block bg-white rounded-xl shadow-lg overflow-x-auto relative">
+        <div className="min-w-max relative">
+          {/* Current Time Line */}
+          {timeLinePosition !== null && (
+            <div
+              className="absolute top-0 bottom-0 border-l-2 border-red-500 z-10 pointer-events-none"
+              style={{ left: `${timeLinePosition}px` }}
+            >
+              <div className="absolute -top-6 -left-8 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-sm whitespace-nowrap">
+                Current Time
+              </div>
+            </div>
+          )}
+
           <div
             className="grid border-b-2 border-slate-200"
             style={{ gridTemplateColumns: `200px repeat(${timeSlots.length}, 80px)` }}
           >
-            <div className="sticky left-0 bg-slate-100 p-3 border-r-2 border-slate-200">
+            <div className="sticky left-0 bg-slate-100 p-3 border-r-2 border-slate-200 z-20">
               <span className="text-slate-700">Vehicle</span>
             </div>
             {timeSlots.map((time) => (
@@ -168,7 +218,7 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
                 }`}
               style={{ gridTemplateColumns: `200px repeat(${timeSlots.length}, 80px)` }}
             >
-              <div className="sticky left-0 bg-inherit p-3 border-r-2 border-slate-200">
+              <div className="sticky left-0 bg-inherit p-3 border-r-2 border-slate-200 z-20">
                 <p className="text-slate-900 text-sm">{car}</p>
               </div>
               {timeSlots.map((timeSlot) => {
