@@ -150,7 +150,18 @@ function AppContent() {
     };
   }, []);
 
-  const totalSteps = 5;
+  // For non-timed events, we skip step 2 (time selection)
+  const isTimed = activeEvent?.eventType !== 'non_timed';
+  const totalSteps = isTimed ? 5 : 4;
+
+  // Map logical step to actual step based on event type
+  // For timed: 1=car, 2=time, 3=info, 4=waiver, 5=confirm
+  // For non-timed: 1=car, 2=info, 3=waiver, 4=confirm (skip time)
+  const getActualStep = (logicalStep: number): number => {
+    if (isTimed) return logicalStep;
+    // For non-timed, map: 1->1, 2->3, 3->4, 4->5 (skip step 2)
+    return logicalStep === 1 ? 1 : logicalStep + 1;
+  };
 
   const nextStep = () => {
     setDirection(1);
@@ -316,7 +327,7 @@ function AppContent() {
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
                   className="bg-white rounded-2xl shadow-xl p-8 mb-8"
                 >
-                  {step === 1 && (
+                  {getActualStep(step) === 1 && (
                     <CarSelection
                       onNext={(car) => {
                         updateData({ car });
@@ -327,7 +338,7 @@ function AppContent() {
                     />
                   )}
 
-                  {step === 2 && (
+                  {getActualStep(step) === 2 && isTimed && (
                     <TimeSlotSelection
                       car={registrationData.car!}
                       onNext={(date, timeSlot) => {
@@ -343,7 +354,7 @@ function AppContent() {
                     />
                   )}
 
-                  {step === 3 && (
+                  {getActualStep(step) === 3 && (
                     <PersonalInfo
                       onNext={(info) => {
                         updateData({
@@ -370,7 +381,7 @@ function AppContent() {
                     />
                   )}
 
-                  {step === 4 && (
+                  {getActualStep(step) === 4 && (
                     <WaiverSignature
                       onNext={async (signature, passengerSignatures) => {
                         const completeData = { ...registrationData, signature, additionalPassengers: passengerSignatures };
@@ -379,8 +390,8 @@ function AppContent() {
                         if (success) {
                           nextStep();
                         } else {
-                          // Go back to time slot selection if booking failed
-                          setStep(2);
+                          // Go back to time slot selection if booking failed (only for timed events)
+                          setStep(isTimed ? 2 : 1);
                         }
                       }}
                       onBack={prevStep}
@@ -389,7 +400,7 @@ function AppContent() {
                     />
                   )}
 
-                  {step === 5 && (
+                  {getActualStep(step) === 5 && (
                     <Confirmation data={registrationData} onReset={resetRegistration} />
                   )}
                 </motion.div>

@@ -120,6 +120,7 @@ export interface Event {
     archivedAt?: string;
     createdAt: string;
     isPrimary?: boolean;
+    eventType: 'timed' | 'non_timed';
 }
 
 export interface DbEvent {
@@ -132,6 +133,7 @@ export interface DbEvent {
     created_at: string;
     updated_at: string;
     is_primary: boolean;
+    event_type: 'timed' | 'non_timed';
 }
 
 // ============= Event Settings Types =============

@@ -153,8 +153,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         onEventChange={(id, event) => {
           setSelectedEventId(id);
           setSelectedEvent(event);
+          // Force exit editor mode if switching to archived event
           if (event?.status === 'archived' && viewMode === 'editor') {
-            setViewMode('list'); // Force exit editor mode if switching to archive
+            setViewMode('list');
+          }
+          // Force exit schedule mode if switching to non-timed event
+          if (event?.eventType === 'non_timed' && viewMode === 'schedule') {
+            setViewMode('list');
           }
         }}
       />
@@ -267,15 +272,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <span className="hidden sm:inline">List View</span>
               <span className="sm:hidden">List</span>
             </button>
-            <button
-              onClick={() => setViewMode('schedule')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'schedule' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                }`}
-            >
-              <Grid3x3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Schedule View</span>
-              <span className="sm:hidden">Schedule</span>
-            </button>
+            {/* Schedule View - Only show for timed events */}
+            {selectedEvent?.eventType !== 'non_timed' && (
+              <button
+                onClick={() => setViewMode('schedule')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'schedule' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                  }`}
+              >
+                <Grid3x3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Schedule View</span>
+                <span className="sm:hidden">Schedule</span>
+              </button>
+            )}
 
             {/* Only show Page Editor to super_admin */}
             {isSuperAdmin && (

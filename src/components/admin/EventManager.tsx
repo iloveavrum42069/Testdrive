@@ -18,6 +18,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
     const [newEventName, setNewEventName] = useState('');
     const [newEventStartDate, setNewEventStartDate] = useState('');
     const [newEventEndDate, setNewEventEndDate] = useState('');
+    const [newEventType, setNewEventType] = useState<'timed' | 'non_timed'>('timed');
     const [isCreating, setIsCreating] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
@@ -56,7 +57,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
             const newEvent = await storageService.createEvent(
                 newEventName.trim(),
                 newEventStartDate || undefined,
-                newEventEndDate || undefined
+                newEventEndDate || undefined,
+                newEventType
             );
 
             if (newEvent) {
@@ -66,6 +68,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                 setNewEventName('');
                 setNewEventStartDate('');
                 setNewEventEndDate('');
+                setNewEventType('timed');
             }
         } catch (error) {
             console.error('Failed to create event:', error);
@@ -171,8 +174,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                         <button
                             onClick={() => setShowDropdown(!showDropdown)}
                             className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border transition-colors ${isViewingArchived
-                                    ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
-                                    : 'bg-slate-50 border-slate-200 hover:border-blue-400'
+                                ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
+                                : 'bg-slate-50 border-slate-200 hover:border-blue-400'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
@@ -407,6 +410,39 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     autoFocus
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Event Type
+                                </label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewEventType('timed')}
+                                        className={`flex-1 px-4 py-2.5 rounded-lg border-2 transition-all font-medium ${newEventType === 'timed'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        ⏰ Timed Event
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewEventType('non_timed')}
+                                        className={`flex-1 px-4 py-2.5 rounded-lg border-2 transition-all font-medium ${newEventType === 'non_timed'
+                                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        📋 Non-Timed Event
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">
+                                    {newEventType === 'timed'
+                                        ? 'Users will select a specific time slot for their test drive.'
+                                        : 'Users register without selecting a time slot. Walk-in style event.'}
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

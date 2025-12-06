@@ -205,7 +205,7 @@ export class SupabaseStorageService {
     /**
      * Create a new event
      */
-    async createEvent(name: string, startDate?: string, endDate?: string): Promise<Event | null> {
+    async createEvent(name: string, startDate?: string, endDate?: string, eventType: 'timed' | 'non_timed' = 'timed'): Promise<Event | null> {
         try {
             // First, unset any existing primary event
             await supabase
@@ -221,7 +221,8 @@ export class SupabaseStorageService {
                     start_date: startDate || null,
                     end_date: endDate || null,
                     status: 'active',
-                    is_primary: true  // New events become primary automatically
+                    is_primary: true,  // New events become primary automatically
+                    event_type: eventType
                 }])
                 .select()
                 .single();
@@ -941,6 +942,7 @@ export class SupabaseStorageService {
             archivedAt: dbRow.archived_at || undefined,
             createdAt: dbRow.created_at,
             isPrimary: dbRow.is_primary || false,
+            eventType: dbRow.event_type || 'timed',
         };
     }
 
