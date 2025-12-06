@@ -241,8 +241,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                 {selectedEvent && (
                     <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-4 text-sm text-slate-500">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${selectedEvent.status === 'active'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-slate-100 text-slate-500'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-100 text-slate-500'
                             }`}>
                             {selectedEvent.status === 'active' ? 'Active' : 'Archived'}
                         </span>
@@ -259,11 +259,11 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
             {/* Create Event Modal */}
             {showCreateModal && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 isolate"
                     onClick={closeModal}
                 >
                     <div
-                        className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+                        className="bg-white rounded-2xl shadow-2xl max-w-md w-full relative z-[10000]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6 border-b border-slate-200 flex items-center justify-between">
