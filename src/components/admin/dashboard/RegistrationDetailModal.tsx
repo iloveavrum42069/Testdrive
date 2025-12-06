@@ -8,6 +8,7 @@ interface RegistrationDetailModalProps {
     onToggleComplete: (id: string) => void;
     onDelete: (id: string) => void;
     onVerifyLicense: () => void;
+    isReadOnly?: boolean;
 }
 
 export function RegistrationDetailModal({
@@ -15,7 +16,8 @@ export function RegistrationDetailModal({
     onClose,
     onToggleComplete,
     onDelete,
-    onVerifyLicense
+    onVerifyLicense,
+    isReadOnly = false
 }: RegistrationDetailModalProps) {
     return (
         <div
@@ -152,13 +154,15 @@ export function RegistrationDetailModal({
                                         <p className="text-amber-800 text-sm">
                                             Customer has attested to having a valid license. Staff verification required before test drive.
                                         </p>
-                                        <button
-                                            onClick={onVerifyLicense}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                                        >
-                                            <ShieldCheck className="w-4 h-4" />
-                                            Verify License Now
-                                        </button>
+                                        {!isReadOnly && (
+                                            <button
+                                                onClick={onVerifyLicense}
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                            >
+                                                <ShieldCheck className="w-4 h-4" />
+                                                Verify License Now
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -289,23 +293,27 @@ export function RegistrationDetailModal({
                                 Download Signed Waiver PDF
                             </a>
                         )}
-                        <button
-                            onClick={() => onToggleComplete(registration.registrationId!)}
-                            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${registration.completed
-                                ? 'bg-slate-600 text-white hover:bg-slate-700'
-                                : 'bg-green-600 text-white hover:bg-green-700'
-                                }`}
-                        >
-                            <CheckCircle className="w-5 h-5" />
-                            {registration.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
-                        </button>
-                        <button
-                            onClick={() => onDelete(registration.registrationId!)}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                            Delete Registration
-                        </button>
+                        {!isReadOnly && (
+                            <>
+                                <button
+                                    onClick={() => onToggleComplete(registration.registrationId!)}
+                                    className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${registration.completed
+                                        ? 'bg-slate-600 text-white hover:bg-slate-700'
+                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                        }`}
+                                >
+                                    <CheckCircle className="w-5 h-5" />
+                                    {registration.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
+                                </button>
+                                <button
+                                    onClick={() => onDelete(registration.registrationId!)}
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                    Delete Registration
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

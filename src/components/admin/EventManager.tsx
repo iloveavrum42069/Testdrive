@@ -29,6 +29,14 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
         try {
             const loadedEvents = await storageService.getEvents();
             setEvents(loadedEvents);
+
+            // Auto-select the first active event if none is selected
+            if (!selectedEventId) {
+                const firstActive = loadedEvents.find(e => e.status === 'active');
+                if (firstActive) {
+                    onEventChange(firstActive.id, firstActive);
+                }
+            }
         } catch (error) {
             console.error('Failed to load events:', error);
         } finally {
@@ -48,7 +56,6 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
             );
 
             if (newEvent) {
-                setEvents(prev => [newEvent, ...prev]);
                 setEvents(prev => [newEvent, ...prev]);
                 onEventChange(newEvent.id, newEvent);
                 setShowCreateModal(false);

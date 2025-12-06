@@ -245,6 +245,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             registrations={filteredRegistrations}
             onSelect={setSelectedRegistration}
             onDelete={handleDelete}
+            isReadOnly={selectedEvent?.status === 'archived'}
           />
         )}
 
@@ -267,6 +268,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           onToggleComplete={handleToggleComplete}
           onDelete={handleDelete}
           onVerifyLicense={() => setShowVerifyModal(true)}
+          isReadOnly={selectedEvent?.status === 'archived'}
         />
       )}
 

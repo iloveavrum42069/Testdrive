@@ -6,9 +6,10 @@ interface RegistrationListProps {
     registrations: RegistrationData[];
     onSelect: (registration: RegistrationData) => void;
     onDelete: (id: string) => void;
+    isReadOnly?: boolean;
 }
 
-export function RegistrationList({ registrations, onSelect, onDelete }: RegistrationListProps) {
+export function RegistrationList({ registrations, onSelect, onDelete, isReadOnly = false }: RegistrationListProps) {
     if (registrations.length === 0) {
         return (
             <div className="text-center py-12">
@@ -73,15 +74,17 @@ export function RegistrationList({ registrations, onSelect, onDelete }: Registra
                             </div>
                         </div>
 
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(registration.registrationId!);
-                            }}
-                            className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </button>
+                        {!isReadOnly && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(registration.registrationId!);
+                                }}
+                                className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
