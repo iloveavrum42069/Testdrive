@@ -20,20 +20,6 @@ A production-grade web application for managing automotive test drive registrati
 src/
 ├── components/
 │   ├── registration/        # User-facing registration flow
-│   │   ├── CarSelection.tsx
-│   │   ├── TimeSlotSelection.tsx
-│   │   ├── PersonalInfo.tsx
-│   │   ├── WaiverSignature.tsx
-│   │   └── Confirmation.tsx
-│   ├── admin/               # Admin portal
-│   │   ├── AdminDashboard.tsx
-│   │   ├── AdminLogin.tsx
-│   │   ├── PageEditor.tsx
-│   │   ├── AddRegistrationModal.tsx
-│   │   ├── ScheduleGrid.tsx
-│   │   └── dashboard/       # Dashboard sub-components
-│   │       ├── StatsCards.tsx
-│   │       ├── RegistrationList.tsx
 │   │       ├── RegistrationDetailModal.tsx
 │   │       └── LicenseVerificationModal.tsx
 │   ├── shared/              # Shared/reusable components
@@ -72,8 +58,9 @@ supabase/
 1. **Real-Time Slot Locking** - Prevents double-booking via `slot_holds` table
 2. **PDF Waiver Generation** - Uses html2canvas + jsPDF
 3. **SMS Confirmations** - Supabase Edge Function → Twilio
-4. **Rate Limiting** - Database trigger on registrations
-5. **Admin Dashboard** - Protected by Supabase Auth
+5. **Event Management** - Events isolate registrations and waivers
+6. **Rate Limiting** - Database trigger on registrations
+7. **Admin Dashboard** - Protected by Supabase Auth
 
 ---
 
@@ -118,15 +105,23 @@ npx supabase functions deploy send-sms --no-verify-jwt
 
 | Table | Purpose |
 |-------|---------|
-| `registrations` | All test drive bookings |
+| `events` | [NEW] Events definition (start/end dates, status) |
+| `registrations` | All bookings (linked to `events.id`) |
 | `slot_holds` | Temporary slot reservations (6 min TTL) |
 | `settings` | App configuration (page settings) |
+
+### Migrations
+You must run the SQL migrations in `supabase/migrations/` to set up the `events` table and RLS policies.
 
 ---
 
 ## Super Admin Access
 
-To access the "Page Editor" tab, a user must have the `super_admin` role.
+## Super Admin Access
+
+The `super_admin` role is required to access:
+1. **Page Editor** - Modify content, cars, and slots
+2. **Event Manager** - Create, archive, and switch active events
 
 ### Method 1: Supabase Dashboard (UI)
 1. Go to Authentication -> Users

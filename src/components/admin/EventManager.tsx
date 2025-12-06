@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar, Archive, Plus, ChevronDown, Check, X } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { Event } from '../../types';
@@ -257,7 +258,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
             </div>
 
             {/* Create Event Modal */}
-            {showCreateModal && (
+            {showCreateModal && createPortal(
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 isolate"
                     onClick={closeModal}
@@ -338,7 +339,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );
