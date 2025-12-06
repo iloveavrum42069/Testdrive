@@ -314,7 +314,7 @@ function AppContent() {
 
         {view === 'registration' && !isSettingsLoading && (
           <>
-            <ProgressIndicator currentStep={step} totalSteps={totalSteps} />
+            <ProgressIndicator currentStep={step} totalSteps={totalSteps} isTimed={isTimed} />
 
             <div className="relative">
               <AnimatePresence mode="wait" custom={direction}>
