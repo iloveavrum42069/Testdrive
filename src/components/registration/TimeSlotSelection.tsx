@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Car } from '../../App';
 import { Calendar, Clock, ChevronLeft, AlertCircle, Timer } from 'lucide-react';
-import { getPageSettings } from '../admin/PageEditor';
 import { formatDateDisplay } from '../../utils/formatters';
 import { storageService } from '../../services/storageService';
 import { supabase } from '../../lib/supabase';
@@ -14,11 +13,13 @@ interface TimeSlotSelectionProps {
   selectedDate?: string;
   selectedTimeSlot?: string;
   sessionId: string;
+  eventDates: string[];
+  timeSlots: string[];
 }
 
-export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedTimeSlot, sessionId }: TimeSlotSelectionProps) {
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
+export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedTimeSlot, sessionId, eventDates, timeSlots }: TimeSlotSelectionProps) {
+  const [availableDates] = useState<string[]>(eventDates);
+  const [availableTimeSlots] = useState<string[]>(timeSlots);
   const [date, setDate] = useState(selectedDate || '');
   const [timeSlot, setTimeSlot] = useState(selectedTimeSlot || '');
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
@@ -26,15 +27,6 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
   const [myHeldSlot, setMyHeldSlot] = useState<string | null>(null);
   const [holdTimeRemaining, setHoldTimeRemaining] = useState<number>(0);
   const [isCreatingHold, setIsCreatingHold] = useState(false);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await getPageSettings();
-      setTimeSlots(settings.timeSlots);
-      setAvailableDates(settings.eventDates);
-    };
-    loadSettings();
-  }, []);
 
   // Load booked and held slots (optimized - only 2 DB queries)
   const loadSlotStatus = useCallback(async () => {
@@ -247,7 +239,7 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
               <span className="text-sm text-slate-500">(Click to reserve)</span>
             </label>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {timeSlots.map((slot) => {
+              {availableTimeSlots.map((slot) => {
                 const booked = bookedSlots.has(slot);
                 const heldByOther = heldSlots.has(slot);
                 const isMyHold = slot === myHeldSlot;

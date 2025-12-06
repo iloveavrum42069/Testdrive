@@ -312,6 +312,7 @@ function AppContent() {
                         nextStep();
                       }}
                       selectedCar={registrationData.car}
+                      cars={pageSettings.cars}
                     />
                   )}
 
@@ -326,6 +327,8 @@ function AppContent() {
                       selectedDate={registrationData.date}
                       selectedTimeSlot={registrationData.timeSlot}
                       sessionId={sessionId}
+                      eventDates={pageSettings.eventDates}
+                      timeSlots={pageSettings.timeSlots}
                     />
                   )}
 

@@ -1,37 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Car } from '../../App';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { getPageSettings } from '../admin/PageEditor';
 
 interface CarSelectionProps {
   onNext: (car: Car) => void;
   selectedCar?: Car;
+  cars: Car[];
 }
 
-export function CarSelection({ onNext, selectedCar }: CarSelectionProps) {
-  const [cars, setCars] = useState<Car[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      setIsLoading(true);
-      const settings = await getPageSettings();
-      setCars(settings.cars);
-      setIsLoading(false);
-    };
-    loadSettings();
-  }, []);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-600">Loading available vehicles...</p>
-      </div>
-    );
-  }
+export function CarSelection({ onNext, selectedCar, cars }: CarSelectionProps) {
 
   // Empty state
   if (cars.length === 0) {
