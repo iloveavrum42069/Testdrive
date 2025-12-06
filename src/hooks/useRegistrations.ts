@@ -10,10 +10,9 @@ export function useRegistrations(eventId?: string | null) {
     const loadRegistrations = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Load registrations filtered by event if eventId is provided
-            const data = eventId
-                ? await storageService.getRegistrationsByEvent(eventId)
-                : await storageService.getRegistrations();
+            // Always load all registrations for now
+            // Event filtering will be added once database is fully set up
+            const data = await storageService.getRegistrations();
             setRegistrations([...data].reverse());
         } catch (error) {
             console.error('Failed to load registrations:', error);
@@ -21,7 +20,7 @@ export function useRegistrations(eventId?: string | null) {
         } finally {
             setIsLoading(false);
         }
-    }, [eventId]);
+    }, []);
 
     useEffect(() => {
         loadRegistrations();
