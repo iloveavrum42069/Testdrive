@@ -4,7 +4,6 @@ import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor, getPageSettings } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
-import { EventManager } from './EventManager';
 import { useRegistrations } from '../../hooks/useRegistrations';
 import { exportToCSV } from '../../utils/csvExport';
 import { StatsCards } from './dashboard/StatsCards';
@@ -21,17 +20,14 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  // Event management state
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-
-  // Pass eventId to useRegistrations for event-filtered data
+  // Get all registrations (no event filtering for now)
   const {
     registrations,
     deleteRegistration,
     toggleComplete,
     addRegistration,
     verifyLicense
-  } = useRegistrations(selectedEventId);
+  } = useRegistrations();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRegistration, setSelectedRegistration] = useState<RegistrationData | null>(null);
@@ -112,14 +108,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Event Manager - Only show for super admins */}
-      {isSuperAdmin && (
-        <EventManager
-          selectedEventId={selectedEventId}
-          onEventChange={setSelectedEventId}
-        />
-      )}
-
       <StatsCards registrations={registrations} />
 
       <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
