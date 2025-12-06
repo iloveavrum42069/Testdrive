@@ -64,8 +64,13 @@ export default function App() {
     };
 
     const loadActiveEvent = async () => {
-      const event = await storageService.getActiveEvent();
-      setActiveEvent(event);
+      try {
+        const event = await storageService.getActiveEvent();
+        setActiveEvent(event);
+      } catch (error) {
+        // Events table might not exist yet, that's okay
+        console.log('Events not configured yet');
+      }
     };
 
     loadSettings();
@@ -135,19 +140,18 @@ export default function App() {
       ...data,
       registrationId: `TD-${Date.now()}`,
       registeredAt: new Date().toISOString(),
-      eventId: activeEvent?.id, // Associate registration with active event
+      eventId: activeEvent?.id, // Associate with active event if one exists
     };
 
     // Generate PDF Waiver
     try {
       const pdfBlob = await pdfService.generateWaiverPdf(newRegistration, pageSettings);
       const driverName = `${newRegistration.firstName}_${newRegistration.lastName}`;
-      // Pass eventId to uploadWaiver for organized storage
       const pdfUrl = await storageService.uploadWaiver(
         pdfBlob,
         driverName,
         newRegistration.date || new Date().toISOString().split('T')[0],
-        activeEvent?.id
+        activeEvent?.id // Organize waivers by event
       );
 
       if (pdfUrl) {
