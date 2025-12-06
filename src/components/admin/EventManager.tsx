@@ -149,19 +149,23 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
         <>
             {/* Ghost Mode Banner for Archived Events */}
             {isViewingArchived && (
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl p-4 mb-4 shadow-lg">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                            <Eye className="w-5 h-5" />
+                <div className="bg-amber-600 text-white rounded-xl p-4 mb-4 shadow-lg border-2 border-amber-700">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-500 rounded-xl">
+                            <Archive className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold flex items-center gap-2">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
                                 <Lock className="w-4 h-4" />
-                                Viewing Archived Event (Read-Only)
+                                Viewing Archived Event
                             </h3>
-                            <p className="text-white/80 text-sm">
-                                This event is archived. You can view registrations and download waivers, but no modifications are allowed.
+                            <p className="text-amber-100 text-sm mt-0.5">
+                                Read-only mode • View registrations and download waivers only
                             </p>
+                        </div>
+                        <div className="text-amber-200 text-right">
+                            <div className="text-xs uppercase tracking-wide">Event</div>
+                            <div className="font-semibold">{selectedEvent?.name}</div>
                         </div>
                     </div>
                 </div>
@@ -421,8 +425,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                         type="button"
                                         onClick={() => setNewEventType('timed')}
                                         className={`flex-1 px-4 py-2.5 rounded-lg border-2 transition-all font-medium ${newEventType === 'timed'
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
                                             }`}
                                     >
                                         ⏰ Timed Event
@@ -431,8 +435,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                         type="button"
                                         onClick={() => setNewEventType('non_timed')}
                                         className={`flex-1 px-4 py-2.5 rounded-lg border-2 transition-all font-medium ${newEventType === 'non_timed'
-                                                ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                            ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
                                             }`}
                                     >
                                         📋 Non-Timed Event
