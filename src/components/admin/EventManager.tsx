@@ -149,23 +149,23 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
         <>
             {/* Ghost Mode Banner for Archived Events */}
             {isViewingArchived && (
-                <div className="bg-amber-600 text-white rounded-xl p-4 mb-4 shadow-lg border-2 border-amber-700">
+                <div className="bg-orange-500 text-white rounded-xl p-5 mb-4 shadow-xl border-2 border-orange-600">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-500 rounded-xl">
-                            <Archive className="w-6 h-6" />
+                        <div className="p-3 bg-orange-400 rounded-xl shadow-inner">
+                            <Archive className="w-7 h-7" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Viewing Archived Event
+                            <h3 className="font-bold text-xl flex items-center gap-2">
+                                <Lock className="w-5 h-5" />
+                                📁 Viewing Archived Event
                             </h3>
-                            <p className="text-amber-100 text-sm mt-0.5">
-                                Read-only mode • View registrations and download waivers only
+                            <p className="text-orange-100 text-sm mt-1">
+                                Read-only mode • Registrations and waivers can be viewed but not modified
                             </p>
                         </div>
-                        <div className="text-amber-200 text-right">
-                            <div className="text-xs uppercase tracking-wide">Event</div>
-                            <div className="font-semibold">{selectedEvent?.name}</div>
+                        <div className="text-right bg-orange-400/50 px-4 py-2 rounded-lg">
+                            <div className="text-xs uppercase tracking-wide text-orange-200">Event</div>
+                            <div className="font-bold text-lg">{selectedEvent?.name}</div>
                         </div>
                     </div>
                 </div>
