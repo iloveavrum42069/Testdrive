@@ -17,6 +17,7 @@ import { authService } from './services/authService';
 import { supabase } from './lib/supabase';
 import { toast } from 'sonner';
 import { Car, Passenger, RegistrationData, Event } from './types';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Re-export types for backward compatibility
 export type { Car, Passenger, RegistrationData } from './types';
@@ -421,6 +422,7 @@ function AppContent() {
           )}
         </footer>
       </div>
+      <SpeedInsights />
     </div >
   );
 }
