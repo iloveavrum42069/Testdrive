@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
 import { Event } from '../../types';
-import { LogOut, Search, Download, Grid3x3, List, Settings, Plus, RefreshCw } from 'lucide-react';
+import { LogOut, Download, Grid3x3, List, Settings, Plus, RefreshCw } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor, getPageSettings, DEFAULT_SETTINGS } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
@@ -197,13 +197,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="🔍 Search registrations by name, email, vehicle, or ID..."
-              className="w-full pl-12 pr-12 py-4 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-slate-300 transition-all"
+              placeholder="Search registrations by name, email, vehicle, or ID..."
+              className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-slate-300 transition-all"
             />
             {searchTerm && (
               <button
