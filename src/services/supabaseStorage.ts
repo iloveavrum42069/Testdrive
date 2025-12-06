@@ -189,15 +189,11 @@ export class SupabaseStorageService {
                 .eq('status', 'active')
                 .order('created_at', { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    // No active event found
-                    return null;
-                }
-                throw error;
-            }
+            if (error) throw error;
+
+            if (!data) return null;
 
             return this.mapToEvent(data);
         } catch (error) {
