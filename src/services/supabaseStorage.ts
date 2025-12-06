@@ -880,8 +880,8 @@ export class SupabaseStorageService {
             email: data.email,
             phone: data.phone,
             car_data: data.car,
-            date: data.date,
-            time_slot: data.timeSlot,
+            date: data.date || null,  // Support non-timed events with null date
+            time_slot: data.timeSlot || null,  // Support non-timed events with null time
             completed: data.completed ?? false,
             license_verified: data.licenseVerified ?? false,
             license_verified_by: data.licenseVerifiedBy,

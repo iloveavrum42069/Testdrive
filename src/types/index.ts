@@ -72,8 +72,8 @@ export interface DbRegistration {
     last_name: string;
     email: string;
     phone: string;
-    date: string;
-    time_slot: string;
+    date: string | null;  // Nullable for non-timed events
+    time_slot: string | null;  // Nullable for non-timed events
     has_valid_license: boolean;
     signature: string;
     registered_at: string;

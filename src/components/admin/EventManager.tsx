@@ -173,131 +173,149 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
             <div className={`bg-white rounded-xl p-4 shadow-sm border ${isViewingArchived ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'}`}>
                 <div className="flex items-center justify-between gap-4">
-                    {/* Event Selector */}
-                    <div className="relative flex-1">
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border transition-colors ${isViewingArchived
-                                ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
-                                : 'bg-slate-50 border-slate-200 hover:border-blue-400'
-                                }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Calendar className={`w-5 h-5 ${isViewingArchived ? 'text-amber-500' : 'text-blue-500'}`} />
-                                <div className="text-left">
-                                    <div className="text-xs text-slate-500">
-                                        {isViewingArchived ? 'Archived Event' : 'Current Event'}
+                    {/* Event Selector - Only for Super Admins */}
+                    {isSuperAdmin ? (
+                        <div className="relative flex-1">
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border transition-colors ${isViewingArchived
+                                    ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
+                                    : 'bg-slate-50 border-slate-200 hover:border-blue-400'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Calendar className={`w-5 h-5 ${isViewingArchived ? 'text-amber-500' : 'text-blue-500'}`} />
+                                    <div className="text-left">
+                                        <div className="text-xs text-slate-500">
+                                            {isViewingArchived ? 'Archived Event' : 'Current Event'}
+                                        </div>
+                                        <div className="font-medium text-slate-800 flex items-center gap-2">
+                                            {selectedEvent?.name || 'Select an event'}
+                                            {selectedEvent?.isPrimary && (
+                                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                            )}
+                                        </div>
                                     </div>
+                                </div>
+                                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Dropdown */}
+                            {showDropdown && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-slate-200 shadow-lg z-50 max-h-80 overflow-y-auto">
+                                    {/* All Registrations Option - Only for Super Admins */}
+                                    {isSuperAdmin && (
+                                        <button
+                                            onClick={() => {
+                                                onEventChange(null, null);
+                                                setShowDropdown(false);
+                                            }}
+                                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                                <span className="text-slate-700 font-medium">All Registrations</span>
+                                            </div>
+                                            {selectedEventId === null && (
+                                                <Check className="w-4 h-4 text-blue-500" />
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Active Events */}
+                                    {activeEvents.length > 0 && (
+                                        <div>
+                                            <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                                Active Events
+                                            </div>
+                                            {activeEvents.map(event => (
+                                                <button
+                                                    key={event.id}
+                                                    onClick={() => {
+                                                        onEventChange(event.id, event);
+                                                        setShowDropdown(false);
+                                                    }}
+                                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                        <span className="text-slate-700">{event.name}</span>
+                                                        {event.isPrimary && (
+                                                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1">
+                                                                <Star className="w-3 h-3 fill-yellow-500" />
+                                                                Primary
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {event.id === selectedEventId && (
+                                                        <Check className="w-4 h-4 text-blue-500" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Archived Events - Only for Super Admins */}
+                                    {isSuperAdmin && archivedEvents.length > 0 && (
+                                        <div>
+                                            <div className="px-3 py-2 text-xs font-semibold text-amber-600 uppercase tracking-wider bg-amber-50 flex items-center gap-2">
+                                                <Archive className="w-3 h-3" />
+                                                Archived Events (Super Admin Only)
+                                            </div>
+                                            {archivedEvents.map(event => (
+                                                <button
+                                                    key={event.id}
+                                                    onClick={() => {
+                                                        onEventChange(event.id, event);
+                                                        setShowDropdown(false);
+                                                    }}
+                                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors opacity-75"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                                        <span className="text-slate-500 flex items-center gap-2">
+                                                            {event.name}
+                                                            <Eye className="w-3 h-3 text-amber-500" />
+                                                        </span>
+                                                    </div>
+                                                    {event.id === selectedEventId && (
+                                                        <Check className="w-4 h-4 text-amber-500" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {events.length === 0 && (
+                                        <div className="px-4 py-6 text-center text-slate-400">
+                                            No events yet. Create your first event!
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        /* Simple event display for regular admins */
+                        <div className="flex-1 px-4 py-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <Calendar className="w-5 h-5 text-blue-500" />
+                                <div>
+                                    <div className="text-xs text-slate-500">Current Event</div>
                                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                                        {selectedEvent?.name || 'Select an event'}
+                                        {selectedEvent?.name || 'No event selected'}
                                         {selectedEvent?.isPrimary && (
                                             <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Dropdown */}
-                        {showDropdown && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-slate-200 shadow-lg z-50 max-h-80 overflow-y-auto">
-                                {/* All Registrations Option - Only for Super Admins */}
-                                {isSuperAdmin && (
-                                    <button
-                                        onClick={() => {
-                                            onEventChange(null, null);
-                                            setShowDropdown(false);
-                                        }}
-                                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                            <span className="text-slate-700 font-medium">All Registrations</span>
-                                        </div>
-                                        {selectedEventId === null && (
-                                            <Check className="w-4 h-4 text-blue-500" />
-                                        )}
-                                    </button>
-                                )}
-
-                                {/* Active Events */}
-                                {activeEvents.length > 0 && (
-                                    <div>
-                                        <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
-                                            Active Events
-                                        </div>
-                                        {activeEvents.map(event => (
-                                            <button
-                                                key={event.id}
-                                                onClick={() => {
-                                                    onEventChange(event.id, event);
-                                                    setShowDropdown(false);
-                                                }}
-                                                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                                    <span className="text-slate-700">{event.name}</span>
-                                                    {event.isPrimary && (
-                                                        <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1">
-                                                            <Star className="w-3 h-3 fill-yellow-500" />
-                                                            Primary
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {event.id === selectedEventId && (
-                                                    <Check className="w-4 h-4 text-blue-500" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Archived Events - Only for Super Admins */}
-                                {isSuperAdmin && archivedEvents.length > 0 && (
-                                    <div>
-                                        <div className="px-3 py-2 text-xs font-semibold text-amber-600 uppercase tracking-wider bg-amber-50 flex items-center gap-2">
-                                            <Archive className="w-3 h-3" />
-                                            Archived Events (Super Admin Only)
-                                        </div>
-                                        {archivedEvents.map(event => (
-                                            <button
-                                                key={event.id}
-                                                onClick={() => {
-                                                    onEventChange(event.id, event);
-                                                    setShowDropdown(false);
-                                                }}
-                                                className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors opacity-75"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
-                                                    <span className="text-slate-500 flex items-center gap-2">
-                                                        {event.name}
-                                                        <Eye className="w-3 h-3 text-amber-500" />
-                                                    </span>
-                                                </div>
-                                                {event.id === selectedEventId && (
-                                                    <Check className="w-4 h-4 text-amber-500" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {events.length === 0 && (
-                                    <div className="px-4 py-6 text-center text-slate-400">
-                                        No events yet. Create your first event!
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                        {/* Set as Primary - Only for active, non-primary events */}
-                        {selectedEvent && selectedEvent.status === 'active' && !selectedEvent.isPrimary && (
+                        {/* Set as Primary - Super Admin only, only for active, non-primary events */}
+                        {isSuperAdmin && selectedEvent && selectedEvent.status === 'active' && !selectedEvent.isPrimary && (
                             <button
                                 onClick={() => handleSetPrimary(selectedEvent.id)}
                                 className="flex items-center gap-2 px-3 py-2.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors font-medium text-sm"
@@ -308,8 +326,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                             </button>
                         )}
 
-                        {/* Create New Event - Not when viewing archived */}
-                        {!isViewingArchived && (
+                        {/* Create New Event - Super Admin only, not when viewing archived */}
+                        {isSuperAdmin && !isViewingArchived && (
                             <button
                                 onClick={() => setShowCreateModal(true)}
                                 className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
@@ -319,8 +337,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                             </button>
                         )}
 
-                        {/* Archive Button - Only for active events */}
-                        {selectedEvent && selectedEvent.status === 'active' && (
+                        {/* Archive Button - Super Admin only, only for active events */}
+                        {isSuperAdmin && selectedEvent && selectedEvent.status === 'active' && (
                             <button
                                 onClick={() => handleArchiveEvent(selectedEvent.id)}
                                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg transition-colors font-medium"
