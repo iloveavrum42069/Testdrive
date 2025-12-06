@@ -14,12 +14,12 @@ export function useRegistrations(eventId?: string | null) {
     } = useQuery({
         queryKey: ['registrations', eventId],
         queryFn: async () => {
-            // Eventually use eventId here when backend supports it fully
-            // const data = eventId 
-            //     ? await storageService.getRegistrationsByEvent(eventId)
-            //     : await storageService.getRegistrations();
-
-            // For now, always fetch all as per previous logic
+            // Filter by eventId when one is selected
+            if (eventId) {
+                const data = await storageService.getRegistrationsByEvent(eventId);
+                return [...data].reverse();
+            }
+            // When no event is selected (null), fetch all registrations
             const data = await storageService.getRegistrations();
             return [...data].reverse();
         },

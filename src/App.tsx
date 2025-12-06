@@ -69,23 +69,41 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
-      setPageSettings(settings);
-    };
-
-    const loadActiveEvent = async () => {
+    const loadEventAndSettings = async () => {
       try {
-        const event = await storageService.getActiveEvent();
+        // Get the primary event (the one marked for public use)
+        const event = await storageService.getPrimaryEvent();
         setActiveEvent(event);
+
+        // Load event-specific settings if we have a primary event
+        if (event?.id) {
+          const eventSettings = await storageService.getEventSettings(event.id, DEFAULT_SETTINGS);
+          setPageSettings({
+            heroTitle: eventSettings.heroTitle,
+            heroSubtitle: eventSettings.heroSubtitle,
+            footerText: eventSettings.footerText,
+            waiverText: eventSettings.waiverText,
+            parentalConsentText: eventSettings.parentalConsentText,
+            eventDates: eventSettings.eventDates,
+            timeSlots: eventSettings.timeSlots,
+            cars: eventSettings.cars,
+            completionSmsEnabled: eventSettings.completionSmsEnabled,
+            completionSmsMessage: eventSettings.completionSmsMessage,
+          });
+        } else {
+          // Fall back to global settings if no primary event
+          const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
+          setPageSettings(settings);
+        }
       } catch (error) {
-        // Events table might not exist yet, that's okay
-        console.log('Events not configured yet');
+        // Events table might not exist yet, fall back to global settings
+        console.log('Events not configured yet, using global settings');
+        const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
+        setPageSettings(settings);
       }
     };
 
-    loadSettings();
-    loadActiveEvent();
+    loadEventAndSettings();
 
     // Listen for settings changes via Supabase real-time
     const channel = supabase
@@ -98,7 +116,18 @@ function AppContent() {
           table: 'settings',
         },
         () => {
-          loadSettings();
+          loadEventAndSettings();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_settings',
+        },
+        () => {
+          loadEventAndSettings();
         }
       )
       .subscribe();

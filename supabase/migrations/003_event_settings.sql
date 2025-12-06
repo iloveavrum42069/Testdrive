@@ -125,8 +125,17 @@ BEGIN
     
     -- If we have an active event, copy global settings
     IF active_event_id IS NOT NULL THEN
-        -- Get current global settings
-        SELECT * INTO current_settings FROM settings LIMIT 1;
+        -- Get current global settings (only the columns that exist)
+        SELECT 
+            hero_title,
+            hero_subtitle,
+            footer_text,
+            waiver_text,
+            parental_consent_text,
+            event_dates,
+            time_slots,
+            cars
+        INTO current_settings FROM settings LIMIT 1;
         
         IF current_settings IS NOT NULL THEN
             INSERT INTO event_settings (
@@ -138,9 +147,7 @@ BEGIN
                 parental_consent_text,
                 event_dates,
                 time_slots,
-                cars,
-                completion_sms_enabled,
-                completion_sms_message
+                cars
             ) VALUES (
                 active_event_id,
                 current_settings.hero_title,
@@ -148,11 +155,10 @@ BEGIN
                 current_settings.footer_text,
                 current_settings.waiver_text,
                 current_settings.parental_consent_text,
-                current_settings.event_dates,
-                current_settings.time_slots,
-                current_settings.cars,
-                COALESCE(current_settings.completion_sms_enabled, false),
-                current_settings.completion_sms_message
+                -- Convert JSONB array to TEXT[] array
+                ARRAY(SELECT jsonb_array_elements_text(current_settings.event_dates)),
+                ARRAY(SELECT jsonb_array_elements_text(current_settings.time_slots)),
+                current_settings.cars
             )
             ON CONFLICT (event_id) DO NOTHING;
             
