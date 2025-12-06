@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
 import { Event } from '../../types';
-import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-react';
+import { LogOut, Search, Download, Grid3x3, List, Settings, Plus, FolderOpen, ChevronDown } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor, getPageSettings } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
@@ -41,6 +41,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
+
+  // Available folders (can be expanded)
+  const availableFolders = ['VIP', 'Walk-in', 'Pre-registered', 'Staff', 'Media'];
 
   // Check for super_admin role
   useEffect(() => {
@@ -55,13 +60,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const filteredRegistrations = registrations.filter(r => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       r.firstName?.toLowerCase().includes(searchLower) ||
       r.lastName?.toLowerCase().includes(searchLower) ||
       r.email?.toLowerCase().includes(searchLower) ||
       r.car?.name?.toLowerCase().includes(searchLower) ||
       r.registrationId?.toLowerCase().includes(searchLower)
     );
+
+    // Filter by folder if selected
+    const matchesFolder = !selectedFolder || r.folder === selectedFolder;
+
+    return matchesSearch && matchesFolder;
   });
 
   const handleDelete = (id: string) => {
@@ -119,19 +129,17 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Event Manager - Only show for super admins */}
-      {isSuperAdmin && (
-        <EventManager
-          selectedEventId={selectedEventId}
-          onEventChange={(id, event) => {
-            setSelectedEventId(id);
-            setSelectedEvent(event);
-            if (event?.status === 'archived' && viewMode === 'editor') {
-              setViewMode('list'); // Force exit editor mode if switching to archive
-            }
-          }}
-        />
-      )}
+      {/* Event Manager - Show to all admins */}
+      <EventManager
+        selectedEventId={selectedEventId}
+        onEventChange={(id, event) => {
+          setSelectedEventId(id);
+          setSelectedEvent(event);
+          if (event?.status === 'archived' && viewMode === 'editor') {
+            setViewMode('list'); // Force exit editor mode if switching to archive
+          }
+        }}
+      />
 
       <StatsCards registrations={registrations} />
 
@@ -174,6 +182,60 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
             />
           </div>
+        </div>
+
+        {/* Folder Filter */}
+        <div className="mb-4 flex items-center gap-4">
+          <div className="relative">
+            <button
+              onClick={() => setShowFolderDropdown(!showFolderDropdown)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${selectedFolder
+                ? 'bg-blue-50 border-blue-300 text-blue-700'
+                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span>{selectedFolder || 'All Folders'}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFolderDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showFolderDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg border border-slate-200 shadow-lg z-50">
+                <button
+                  onClick={() => {
+                    setSelectedFolder(null);
+                    setShowFolderDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors ${!selectedFolder ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+                    }`}
+                >
+                  All Folders
+                </button>
+                {availableFolders.map(folder => (
+                  <button
+                    key={folder}
+                    onClick={() => {
+                      setSelectedFolder(folder);
+                      setShowFolderDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors ${selectedFolder === folder ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+                      }`}
+                  >
+                    {folder}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedFolder && (
+            <button
+              onClick={() => setSelectedFolder(null)}
+              className="text-sm text-slate-500 hover:text-slate-700"
+            >
+              Clear filter
+            </button>
+          )}
         </div>
 
         <div className="mb-6">
@@ -257,7 +319,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         )}
 
         {viewMode === 'editor' && isSuperAdmin && (
-          <PageEditor />
+          <PageEditor
+            eventId={selectedEventId}
+            isReadOnly={selectedEvent?.status === 'archived'}
+          />
         )}
       </div>
 

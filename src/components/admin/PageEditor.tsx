@@ -100,9 +100,11 @@ I consent to the collection and use of my personal information for the purposes 
 
 interface PageEditorProps {
   onSave?: () => void;
+  eventId?: string | null;
+  isReadOnly?: boolean;
 }
 
-export function PageEditor({ onSave }: PageEditorProps) {
+export function PageEditor({ onSave, eventId, isReadOnly = false }: PageEditorProps) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'cars' | 'waiver' | 'sms'>('general');
@@ -114,16 +116,57 @@ export function PageEditor({ onSave }: PageEditorProps) {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [eventId]);
 
   const loadSettings = async () => {
-    const saved = await storageService.getPageSettings(DEFAULT_SETTINGS);
-    setSettings(saved);
+    // If eventId is provided, load event-specific settings
+    if (eventId) {
+      const eventSettings = await storageService.getEventSettings(eventId, DEFAULT_SETTINGS);
+      // Map EventSettings to PageSettings format
+      setSettings({
+        heroTitle: eventSettings.heroTitle,
+        heroSubtitle: eventSettings.heroSubtitle,
+        footerText: eventSettings.footerText,
+        waiverText: eventSettings.waiverText,
+        parentalConsentText: eventSettings.parentalConsentText,
+        eventDates: eventSettings.eventDates,
+        timeSlots: eventSettings.timeSlots,
+        cars: eventSettings.cars,
+        completionSmsEnabled: eventSettings.completionSmsEnabled,
+        completionSmsMessage: eventSettings.completionSmsMessage,
+      });
+    } else {
+      // Fall back to global settings
+      const saved = await storageService.getPageSettings(DEFAULT_SETTINGS);
+      setSettings(saved);
+    }
   };
 
   const saveSettings = async () => {
+    if (isReadOnly) return;
+
     setIsSaving(true);
-    const success = await storageService.setPageSettings(settings);
+
+    let success = false;
+    if (eventId) {
+      // Save to event-specific settings
+      success = await storageService.setEventSettings(eventId, {
+        eventId,
+        heroTitle: settings.heroTitle,
+        heroSubtitle: settings.heroSubtitle,
+        footerText: settings.footerText,
+        waiverText: settings.waiverText,
+        parentalConsentText: settings.parentalConsentText,
+        eventDates: settings.eventDates,
+        timeSlots: settings.timeSlots,
+        cars: settings.cars,
+        completionSmsEnabled: settings.completionSmsEnabled,
+        completionSmsMessage: settings.completionSmsMessage,
+      });
+    } else {
+      // Save to global settings
+      success = await storageService.setPageSettings(settings);
+    }
 
     setTimeout(() => {
       setIsSaving(false);
@@ -137,9 +180,14 @@ export function PageEditor({ onSave }: PageEditorProps) {
   };
 
   const resetToDefaults = async () => {
+    if (isReadOnly) return;
     if (confirm('Are you sure you want to reset all settings to default? This cannot be undone.')) {
       setSettings(DEFAULT_SETTINGS);
-      await storageService.setPageSettings(DEFAULT_SETTINGS);
+      if (eventId) {
+        await storageService.setEventSettings(eventId, { eventId, ...DEFAULT_SETTINGS });
+      } else {
+        await storageService.setPageSettings(DEFAULT_SETTINGS);
+      }
       alert('Settings reset to defaults.');
     }
   };

@@ -46,6 +46,7 @@ export interface RegistrationData {
     agreedToTOS?: boolean;
     waiverPdfUrl?: string;
     eventId?: string;
+    folder?: string;
 }
 
 export interface PageSettings {
@@ -118,6 +119,7 @@ export interface Event {
     status: 'active' | 'archived';
     archivedAt?: string;
     createdAt: string;
+    isPrimary?: boolean;
 }
 
 export interface DbEvent {
@@ -127,6 +129,41 @@ export interface DbEvent {
     end_date: string | null;
     status: 'active' | 'archived';
     archived_at: string | null;
+    created_at: string;
+    updated_at: string;
+    is_primary: boolean;
+}
+
+// ============= Event Settings Types =============
+
+export interface EventSettings {
+    id?: string;
+    eventId: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    footerText: string;
+    waiverText: string;
+    parentalConsentText: string;
+    eventDates: string[];
+    timeSlots: string[];
+    cars: Car[];
+    completionSmsEnabled: boolean;
+    completionSmsMessage: string;
+}
+
+export interface DbEventSettings {
+    id: string;
+    event_id: string;
+    hero_title: string | null;
+    hero_subtitle: string | null;
+    footer_text: string | null;
+    waiver_text: string | null;
+    parental_consent_text: string | null;
+    event_dates: string[] | null;
+    time_slots: string[] | null;
+    cars: Car[] | null;
+    completion_sms_enabled: boolean;
+    completion_sms_message: string | null;
     created_at: string;
     updated_at: string;
 }

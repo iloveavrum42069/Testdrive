@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar, Archive, Plus, ChevronDown, Check, X } from 'lucide-react';
+import { Calendar, Archive, Plus, ChevronDown, Check, X, Star, Eye, Lock } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { Event } from '../../types';
 import { formatDateLong } from '../../utils/formatters';
@@ -19,6 +19,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
     const [newEventStartDate, setNewEventStartDate] = useState('');
     const [newEventEndDate, setNewEventEndDate] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
     useEffect(() => {
         loadEvents();
@@ -27,12 +28,15 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
     const loadEvents = async () => {
         setIsLoading(true);
         try {
-            const loadedEvents = await storageService.getEvents();
+            // Use role-based event fetching
+            const { events: loadedEvents, isSuperAdmin: superAdmin } = await storageService.getEventsForRole();
             setEvents(loadedEvents);
+            setIsSuperAdmin(superAdmin);
 
-            // Auto-select the first active event if none is selected
+            // Auto-select the primary event, or first active event if none is selected
             if (!selectedEventId) {
-                const firstActive = loadedEvents.find(e => e.status === 'active');
+                const primaryEvent = loadedEvents.find(e => e.isPrimary && e.status === 'active');
+                const firstActive = primaryEvent || loadedEvents.find(e => e.status === 'active');
                 if (firstActive) {
                     onEventChange(firstActive.id, firstActive);
                 }
@@ -73,7 +77,11 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
     const handleArchiveEvent = async (eventId: string) => {
         const confirmed = window.confirm(
             'Are you sure you want to archive this event?\n\n' +
-            'Archived events become read-only and new registrations cannot be added.'
+            '⚠️ IMPORTANT:\n' +
+            '• Archived events become PERMANENTLY read-only\n' +
+            '• Registrations cannot be edited or deleted\n' +
+            '• This action cannot be undone from the UI\n\n' +
+            'Continue with archiving?'
         );
 
         if (!confirmed) return;
@@ -83,7 +91,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
             if (success) {
                 setEvents(prev => prev.map(e =>
                     e.id === eventId
-                        ? { ...e, status: 'archived' as const, archivedAt: new Date().toISOString() }
+                        ? { ...e, status: 'archived' as const, archivedAt: new Date().toISOString(), isPrimary: false }
                         : e
                 ));
 
@@ -97,6 +105,20 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
         }
     };
 
+    const handleSetPrimary = async (eventId: string) => {
+        try {
+            const success = await storageService.setPrimaryEvent(eventId);
+            if (success) {
+                setEvents(prev => prev.map(e => ({
+                    ...e,
+                    isPrimary: e.id === eventId
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to set primary event:', error);
+        }
+    };
+
     const closeModal = () => {
         setShowCreateModal(false);
         setNewEventName('');
@@ -107,6 +129,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
     const selectedEvent = events.find(e => e.id === selectedEventId);
     const activeEvents = events.filter(e => e.status === 'active');
     const archivedEvents = events.filter(e => e.status === 'archived');
+    const isViewingArchived = selectedEvent?.status === 'archived';
 
     if (isLoading) {
         return (
@@ -121,20 +144,48 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
     return (
         <>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+            {/* Ghost Mode Banner for Archived Events */}
+            {isViewingArchived && (
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl p-4 mb-4 shadow-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-lg">
+                            <Eye className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                <Lock className="w-4 h-4" />
+                                Viewing Archived Event (Read-Only)
+                            </h3>
+                            <p className="text-white/80 text-sm">
+                                This event is archived. You can view registrations and download waivers, but no modifications are allowed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className={`bg-white rounded-xl p-4 shadow-sm border ${isViewingArchived ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'}`}>
                 <div className="flex items-center justify-between gap-4">
                     {/* Event Selector */}
                     <div className="relative flex-1">
                         <button
                             onClick={() => setShowDropdown(!showDropdown)}
-                            className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors"
+                            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border transition-colors ${isViewingArchived
+                                    ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
+                                    : 'bg-slate-50 border-slate-200 hover:border-blue-400'
+                                }`}
                         >
                             <div className="flex items-center gap-3">
-                                <Calendar className="w-5 h-5 text-blue-500" />
+                                <Calendar className={`w-5 h-5 ${isViewingArchived ? 'text-amber-500' : 'text-blue-500'}`} />
                                 <div className="text-left">
-                                    <div className="text-xs text-slate-500">Current Event</div>
-                                    <div className="font-medium text-slate-800">
+                                    <div className="text-xs text-slate-500">
+                                        {isViewingArchived ? 'Archived Event' : 'Current Event'}
+                                    </div>
+                                    <div className="font-medium text-slate-800 flex items-center gap-2">
                                         {selectedEvent?.name || 'Select an event'}
+                                        {selectedEvent?.isPrimary && (
+                                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -144,22 +195,24 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                         {/* Dropdown */}
                         {showDropdown && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-slate-200 shadow-lg z-50 max-h-80 overflow-y-auto">
-                                {/* All Registrations Option */}
-                                <button
-                                    onClick={() => {
-                                        onEventChange(null, null);
-                                        setShowDropdown(false);
-                                    }}
-                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                        <span className="text-slate-700 font-medium">All Registrations</span>
-                                    </div>
-                                    {selectedEventId === null && (
-                                        <Check className="w-4 h-4 text-blue-500" />
-                                    )}
-                                </button>
+                                {/* All Registrations Option - Only for Super Admins */}
+                                {isSuperAdmin && (
+                                    <button
+                                        onClick={() => {
+                                            onEventChange(null, null);
+                                            setShowDropdown(false);
+                                        }}
+                                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                            <span className="text-slate-700 font-medium">All Registrations</span>
+                                        </div>
+                                        {selectedEventId === null && (
+                                            <Check className="w-4 h-4 text-blue-500" />
+                                        )}
+                                    </button>
+                                )}
 
                                 {/* Active Events */}
                                 {activeEvents.length > 0 && (
@@ -179,6 +232,12 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                                                     <span className="text-slate-700">{event.name}</span>
+                                                    {event.isPrimary && (
+                                                        <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1">
+                                                            <Star className="w-3 h-3 fill-yellow-500" />
+                                                            Primary
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 {event.id === selectedEventId && (
                                                     <Check className="w-4 h-4 text-blue-500" />
@@ -188,11 +247,12 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                     </div>
                                 )}
 
-                                {/* Archived Events */}
-                                {archivedEvents.length > 0 && (
+                                {/* Archived Events - Only for Super Admins */}
+                                {isSuperAdmin && archivedEvents.length > 0 && (
                                     <div>
-                                        <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
-                                            Archived Events
+                                        <div className="px-3 py-2 text-xs font-semibold text-amber-600 uppercase tracking-wider bg-amber-50 flex items-center gap-2">
+                                            <Archive className="w-3 h-3" />
+                                            Archived Events (Super Admin Only)
                                         </div>
                                         {archivedEvents.map(event => (
                                             <button
@@ -201,14 +261,17 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                                     onEventChange(event.id, event);
                                                     setShowDropdown(false);
                                                 }}
-                                                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors opacity-60"
+                                                className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors opacity-75"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-slate-400" />
-                                                    <span className="text-slate-500">{event.name}</span>
+                                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                                    <span className="text-slate-500 flex items-center gap-2">
+                                                        {event.name}
+                                                        <Eye className="w-3 h-3 text-amber-500" />
+                                                    </span>
                                                 </div>
                                                 {event.id === selectedEventId && (
-                                                    <Check className="w-4 h-4 text-blue-500" />
+                                                    <Check className="w-4 h-4 text-amber-500" />
                                                 )}
                                             </button>
                                         ))}
@@ -226,14 +289,30 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">New Event</span>
-                        </button>
+                        {/* Set as Primary - Only for active, non-primary events */}
+                        {selectedEvent && selectedEvent.status === 'active' && !selectedEvent.isPrimary && (
+                            <button
+                                onClick={() => handleSetPrimary(selectedEvent.id)}
+                                className="flex items-center gap-2 px-3 py-2.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors font-medium text-sm"
+                                title="Set as the primary event (shown to users)"
+                            >
+                                <Star className="w-4 h-4" />
+                                <span className="hidden sm:inline">Set Primary</span>
+                            </button>
+                        )}
 
+                        {/* Create New Event - Not when viewing archived */}
+                        {!isViewingArchived && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span className="hidden sm:inline">New Event</span>
+                            </button>
+                        )}
+
+                        {/* Archive Button - Only for active events */}
                         {selectedEvent && selectedEvent.status === 'active' && (
                             <button
                                 onClick={() => handleArchiveEvent(selectedEvent.id)}
@@ -261,11 +340,17 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                     </>
                                 ) : (
                                     <>
-                                        <Archive className="w-3 h-3" />
+                                        <Lock className="w-3 h-3" />
                                         Archived (Read Only)
                                     </>
                                 )}
                             </span>
+                            {selectedEvent.isPrimary && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center gap-1.5">
+                                    <Star className="w-3 h-3 fill-yellow-500" />
+                                    Primary Event
+                                </span>
+                            )}
                             {selectedEvent.startDate && (
                                 <span>Starts: {formatDateLong(selectedEvent.startDate)}</span>
                             )}
@@ -275,7 +360,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                         </div>
 
                         {selectedEvent.status === 'archived' && (
-                            <span className="text-xs text-amber-600 font-medium">
+                            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                                <Lock className="w-3 h-3" />
                                 Modifications disabled
                             </span>
                         )}

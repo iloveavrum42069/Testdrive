@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { RegistrationData, PageSettings, DbRegistration, DbSettings, Event, DbEvent } from '../types';
+import { RegistrationData, PageSettings, DbRegistration, DbSettings, Event, DbEvent, EventSettings, DbEventSettings, Car } from '../types';
 import { toast } from 'sonner';
 
 export class SupabaseStorageService {
@@ -276,6 +276,244 @@ export class SupabaseStorageService {
             console.error('Error updating event:', error);
             toast.error('Failed to update event');
             return false;
+        }
+    }
+
+    /**
+     * Get the primary event (the one shown to users)
+     */
+    async getPrimaryEvent(): Promise<Event | null> {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .select('*')
+                .eq('is_primary', true)
+                .eq('status', 'active')
+                .single();
+
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // No primary event set, fall back to first active
+                    return this.getActiveEvent();
+                }
+                throw error;
+            }
+
+            return this.mapToEvent(data);
+        } catch (error) {
+            console.error('Error fetching primary event:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Set an event as primary (only one can be primary at a time)
+     */
+    async setPrimaryEvent(eventId: string): Promise<boolean> {
+        try {
+            // First, unset all primary flags
+            await supabase
+                .from('events')
+                .update({ is_primary: false })
+                .eq('is_primary', true);
+
+            // Set the new primary event
+            const { error } = await supabase
+                .from('events')
+                .update({ is_primary: true })
+                .eq('id', eventId)
+                .eq('status', 'active'); // Only active events can be primary
+
+            if (error) throw error;
+
+            toast.success('Primary event updated');
+            return true;
+        } catch (error) {
+            console.error('Error setting primary event:', error);
+            toast.error('Failed to set primary event');
+            return false;
+        }
+    }
+
+    // --- Event Settings ---
+
+    /**
+     * Get settings for a specific event
+     */
+    async getEventSettings(eventId: string, defaultSettings: PageSettings): Promise<EventSettings> {
+        try {
+            const { data, error } = await supabase
+                .from('event_settings')
+                .select('*')
+                .eq('event_id', eventId)
+                .single();
+
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // No settings for this event, create defaults
+                    const newSettings: EventSettings = {
+                        eventId,
+                        ...defaultSettings
+                    };
+                    await this.setEventSettings(eventId, newSettings);
+                    return newSettings;
+                }
+                throw error;
+            }
+
+            return this.mapToEventSettings(data);
+        } catch (error) {
+            console.error('Error fetching event settings:', error);
+            return { eventId, ...defaultSettings };
+        }
+    }
+
+    /**
+     * Save settings for a specific event
+     */
+    async setEventSettings(eventId: string, settings: EventSettings): Promise<boolean> {
+        try {
+            const dbData = this.mapToDbEventSettings(settings);
+
+            const { error } = await supabase
+                .from('event_settings')
+                .upsert({
+                    event_id: eventId,
+                    ...dbData
+                }, {
+                    onConflict: 'event_id'
+                });
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error saving event settings:', error);
+            toast.error('Failed to save event settings');
+            return false;
+        }
+    }
+
+    // --- Super Admin Check ---
+
+    /**
+     * Check if the current user is a super admin
+     */
+    async isSuperAdmin(): Promise<boolean> {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return false;
+
+            const role = user.user_metadata?.role;
+            return role === 'super_admin';
+        } catch (error) {
+            console.error('Error checking super admin status:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get events based on user role (super admins see all, others see only active)
+     */
+    async getEventsForRole(): Promise<{ events: Event[]; isSuperAdmin: boolean }> {
+        const isSuperAdmin = await this.isSuperAdmin();
+
+        try {
+            let query = supabase
+                .from('events')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            // Non-super-admins only see active events
+            if (!isSuperAdmin) {
+                query = query.eq('status', 'active');
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+
+            return {
+                events: (data || []).map(this.mapToEvent),
+                isSuperAdmin
+            };
+        } catch (error) {
+            console.error('Error fetching events for role:', error);
+            return { events: [], isSuperAdmin };
+        }
+    }
+
+    /**
+     * Get registrations filtered by event and optional folder
+     */
+    async getRegistrationsFiltered(options: {
+        eventId?: string;
+        folder?: string;
+        excludeArchived?: boolean;
+    }): Promise<RegistrationData[]> {
+        try {
+            let query = supabase
+                .from('registrations')
+                .select('*, events!inner(status)')
+                .order('created_at', { ascending: false });
+
+            if (options.eventId) {
+                query = query.eq('event_id', options.eventId);
+            }
+
+            if (options.folder) {
+                query = query.eq('folder', options.folder);
+            }
+
+            if (options.excludeArchived) {
+                query = query.eq('events.status', 'active');
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+
+            return (data || []).map((row: any) => this.mapToRegistrationData(row));
+        } catch (error) {
+            console.error('Error fetching filtered registrations:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Update the folder for a registration
+     */
+    async setRegistrationFolder(registrationId: string, folder: string | null): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('registrations')
+                .update({ folder })
+                .eq('registration_id', registrationId);
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error setting registration folder:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get distinct folder names used in registrations
+     */
+    async getDistinctFolders(): Promise<string[]> {
+        try {
+            const { data, error } = await supabase
+                .from('registrations')
+                .select('folder')
+                .not('folder', 'is', null);
+
+            if (error) throw error;
+
+            const folders = [...new Set((data || []).map(r => r.folder).filter(Boolean))];
+            return folders.sort();
+        } catch (error) {
+            console.error('Error fetching folders:', error);
+            return [];
         }
     }
 
@@ -674,6 +912,39 @@ export class SupabaseStorageService {
             status: dbRow.status,
             archivedAt: dbRow.archived_at || undefined,
             createdAt: dbRow.created_at,
+            isPrimary: dbRow.is_primary || false,
+        };
+    }
+
+    private mapToEventSettings(dbRow: DbEventSettings): EventSettings {
+        return {
+            id: dbRow.id,
+            eventId: dbRow.event_id,
+            heroTitle: dbRow.hero_title || '',
+            heroSubtitle: dbRow.hero_subtitle || '',
+            footerText: dbRow.footer_text || '',
+            waiverText: dbRow.waiver_text || '',
+            parentalConsentText: dbRow.parental_consent_text || '',
+            eventDates: dbRow.event_dates || [],
+            timeSlots: dbRow.time_slots || [],
+            cars: dbRow.cars || [],
+            completionSmsEnabled: dbRow.completion_sms_enabled ?? false,
+            completionSmsMessage: dbRow.completion_sms_message || '',
+        };
+    }
+
+    private mapToDbEventSettings(settings: EventSettings): Partial<DbEventSettings> {
+        return {
+            hero_title: settings.heroTitle,
+            hero_subtitle: settings.heroSubtitle,
+            footer_text: settings.footerText,
+            waiver_text: settings.waiverText,
+            parental_consent_text: settings.parentalConsentText,
+            event_dates: settings.eventDates,
+            time_slots: settings.timeSlots,
+            cars: settings.cars as Car[],
+            completion_sms_enabled: settings.completionSmsEnabled,
+            completion_sms_message: settings.completionSmsMessage,
         };
     }
 
