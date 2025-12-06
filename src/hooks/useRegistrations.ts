@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { RegistrationData } from '../App';
 import { toast } from 'sonner';
 import { storageService } from '../services/storageService';
+import { supabase } from '../lib/supabase';
 
 export function useRegistrations(eventId?: string | null) {
     const queryClient = useQueryClient();
@@ -23,8 +25,26 @@ export function useRegistrations(eventId?: string | null) {
             const data = await storageService.getRegistrations();
             return [...data].reverse();
         },
-        staleTime: 1000 * 60, // 1 minute stale time
+        staleTime: 1000 * 30, // 30 second stale time (reduced for fresher data)
     });
+
+    // Subscribe to realtime changes for registrations
+    useEffect(() => {
+        const channel = supabase
+            .channel('registrations_changes')
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'registrations' },
+                () => {
+                    // Invalidate cache to trigger refetch
+                    queryClient.invalidateQueries({ queryKey: ['registrations'] });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [queryClient]);
 
     if (error) {
         console.error('Failed to load registrations:', error);

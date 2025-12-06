@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
 import { Event } from '../../types';
-import { LogOut, Search, Download, Grid3x3, List, Settings, Plus, FolderOpen, ChevronDown } from 'lucide-react';
+import { LogOut, Search, Download, Grid3x3, List, Settings, Plus, RefreshCw } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor, getPageSettings, DEFAULT_SETTINGS } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
@@ -34,7 +34,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     deleteRegistration,
     toggleComplete,
     addRegistration,
-    verifyLicense
+    verifyLicense,
+    loadRegistrations
   } = useRegistrations(selectedEventId);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,12 +44,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
   const [eventSettings, setEventSettings] = useState<PageSettings>(DEFAULT_SETTINGS);
-
-  // Available folders (can be expanded)
-  const availableFolders = ['VIP', 'Walk-in', 'Pre-registered', 'Staff', 'Media'];
 
   // Check for super_admin role
   useEffect(() => {
@@ -86,10 +82,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       r.registrationId?.toLowerCase().includes(searchLower)
     );
 
-    // Filter by folder if selected
-    const matchesFolder = !selectedFolder || r.folder === selectedFolder;
-
-    return matchesSearch && matchesFolder;
+    return matchesSearch;
   });
 
   const handleDelete = (id: string) => {
@@ -176,6 +169,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={() => loadRegistrations()}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+              title="Refresh registrations"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+            <button
               onClick={() => exportToCSV(registrations)}
               disabled={registrations.length === 0}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors text-sm flex-1 sm:flex-none"
@@ -202,63 +203,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name, email, car, or ID..."
-              className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
             />
           </div>
-        </div>
-
-        {/* Folder Filter */}
-        <div className="mb-4 flex items-center gap-4">
-          <div className="relative">
-            <button
-              onClick={() => setShowFolderDropdown(!showFolderDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${selectedFolder
-                ? 'bg-blue-50 border-blue-300 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                }`}
-            >
-              <FolderOpen className="w-4 h-4" />
-              <span>{selectedFolder || 'All Folders'}</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFolderDropdown ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showFolderDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg border border-slate-200 shadow-lg z-50">
-                <button
-                  onClick={() => {
-                    setSelectedFolder(null);
-                    setShowFolderDropdown(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors ${!selectedFolder ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
-                    }`}
-                >
-                  All Folders
-                </button>
-                {availableFolders.map(folder => (
-                  <button
-                    key={folder}
-                    onClick={() => {
-                      setSelectedFolder(folder);
-                      setShowFolderDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors ${selectedFolder === folder ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
-                      }`}
-                  >
-                    {folder}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {selectedFolder && (
-            <button
-              onClick={() => setSelectedFolder(null)}
-              className="text-sm text-slate-500 hover:text-slate-700"
-            >
-              Clear filter
-            </button>
-          )}
         </div>
 
         <div className="mb-6">
