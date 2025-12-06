@@ -1,33 +1,30 @@
 import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
-import { Calendar, Clock, Car } from 'lucide-react';
-import { getPageSettings } from './PageEditor';
+import { Calendar, Clock, Car as CarIcon } from 'lucide-react';
 import { formatDateDisplay, formatDateShort } from '../../utils/formatters';
+import { Car } from '../../types';
 
 interface ScheduleGridProps {
   registrations: RegistrationData[];
   onSelectBooking: (registration: RegistrationData) => void;
+  eventDates: string[];
+  timeSlots: string[];
+  cars: Car[];
 }
 
-export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridProps) {
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [cars, setCars] = useState<string[]>([]);
-  const [eventDates, setEventDates] = useState<string[]>([]);
+export function ScheduleGrid({ registrations, onSelectBooking, eventDates, timeSlots, cars }: ScheduleGridProps) {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedCar, setSelectedCar] = useState<string | null>(null);
 
+  // Derived state from props
+  const carNames = cars.map(c => c.name);
+
+  // Set initial selected date when eventDates change
   useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await getPageSettings();
-      setTimeSlots(settings.timeSlots);
-      setCars(settings.cars.map(c => c.name));
-      setEventDates(settings.eventDates);
-      if (settings.eventDates.length > 0) {
-        setSelectedDate(settings.eventDates[0]);
-      }
-    };
-    loadSettings();
-  }, []);
+    if (eventDates.length > 0 && !selectedDate) {
+      setSelectedDate(eventDates[0]);
+    }
+  }, [eventDates, selectedDate]);
 
   const getBookingForSlot = (carName: string, timeSlot: string) => {
     return registrations.find(
@@ -76,7 +73,7 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
             className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
           >
             <option value="">All Vehicles</option>
-            {cars.map((car) => (
+            {carNames.map((car) => (
               <option key={car} value={car}>
                 {car}
               </option>
@@ -125,7 +122,7 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-slate-600 text-sm">
-                      <Car className="w-4 h-4 flex-shrink-0" />
+                      <CarIcon className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">{booking.car?.name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-600 text-sm">
@@ -159,18 +156,18 @@ export function ScheduleGrid({ registrations, onSelectBooking }: ScheduleGridPro
             ))}
           </div>
 
-          {cars.map((car, carIndex) => (
+          {carNames.map((carName, carIndex) => (
             <div
-              key={car}
+              key={carName}
               className={`grid border-b border-slate-200 ${carIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'
                 }`}
               style={{ gridTemplateColumns: `200px repeat(${timeSlots.length}, 80px)` }}
             >
               <div className="sticky left-0 bg-inherit p-3 border-r-2 border-slate-200">
-                <p className="text-slate-900 text-sm">{car}</p>
+                <p className="text-slate-900 text-sm">{carName}</p>
               </div>
               {timeSlots.map((timeSlot) => {
-                const booking = getBookingForSlot(car, timeSlot);
+                const booking = getBookingForSlot(carName, timeSlot);
                 return (
                   <div
                     key={timeSlot}

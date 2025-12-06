@@ -3,7 +3,7 @@ import { RegistrationData } from '../../App';
 import { Event } from '../../types';
 import { LogOut, Search, Download, Grid3x3, List, Settings, Plus, FolderOpen, ChevronDown } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
-import { PageEditor, getPageSettings } from './PageEditor';
+import { PageEditor, getPageSettings, DEFAULT_SETTINGS } from './PageEditor';
 import { AddRegistrationModal } from './AddRegistrationModal';
 import { EventManager } from './EventManager';
 import { useRegistrations } from '../../hooks/useRegistrations';
@@ -14,8 +14,10 @@ import { RegistrationDetailModal } from './dashboard/RegistrationDetailModal';
 import { LicenseVerificationModal } from './dashboard/LicenseVerificationModal';
 import { smsService } from '../../services/smsService';
 import { authService } from '../../services/authService';
+import { storageService } from '../../services/storageService';
 import { formatDateLong } from '../../utils/formatters';
 import { toast } from 'sonner';
+import { PageSettings } from '../../types';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -43,6 +45,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [showFolderDropdown, setShowFolderDropdown] = useState(false);
+  const [eventSettings, setEventSettings] = useState<PageSettings>(DEFAULT_SETTINGS);
 
   // Available folders (can be expanded)
   const availableFolders = ['VIP', 'Walk-in', 'Pre-registered', 'Staff', 'Media'];
@@ -57,6 +60,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     };
     checkRole();
   }, []);
+
+  // Load event-specific settings when selectedEventId changes
+  useEffect(() => {
+    const loadEventSettings = async () => {
+      if (selectedEventId) {
+        const settings = await storageService.getEventSettings(selectedEventId, DEFAULT_SETTINGS);
+        setEventSettings(settings);
+      } else {
+        // No event selected, use global settings
+        const settings = await getPageSettings();
+        setEventSettings(settings);
+      }
+    };
+    loadEventSettings();
+  }, [selectedEventId]);
 
   const filteredRegistrations = registrations.filter(r => {
     const searchLower = searchTerm.toLowerCase();
@@ -315,6 +333,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <ScheduleGrid
             registrations={registrations}
             onSelectBooking={setSelectedRegistration}
+            eventDates={eventSettings.eventDates}
+            timeSlots={eventSettings.timeSlots}
+            cars={eventSettings.cars}
           />
         )}
 
