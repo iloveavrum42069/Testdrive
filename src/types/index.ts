@@ -45,6 +45,7 @@ export interface RegistrationData {
     licenseVerifiedAt?: string;
     agreedToTOS?: boolean;
     waiverPdfUrl?: string;
+    eventId?: string;
 }
 
 export interface PageSettings {
@@ -84,6 +85,7 @@ export interface DbRegistration {
     waiver_pdf_url: string | null;
     car_data: Car | null;
     additional_passengers: Passenger[] | null;
+    event_id: string | null;
 }
 
 export interface DbSettings {
@@ -104,4 +106,27 @@ export interface SlotStatusBatch {
     bookedSlots: string[];
     heldSlots: string[];
     myHold: { slot: string; expiresAt: string } | null;
+}
+
+// ============= Event Types =============
+
+export interface Event {
+    id: string;
+    name: string;
+    startDate?: string;
+    endDate?: string;
+    status: 'active' | 'archived';
+    archivedAt?: string;
+    createdAt: string;
+}
+
+export interface DbEvent {
+    id: string;
+    name: string;
+    start_date: string | null;
+    end_date: string | null;
+    status: 'active' | 'archived';
+    archived_at: string | null;
+    created_at: string;
+    updated_at: string;
 }

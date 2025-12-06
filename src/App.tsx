@@ -16,7 +16,7 @@ import { pdfService } from './services/pdfService';
 import { authService } from './services/authService';
 import { supabase } from './lib/supabase';
 import { toast } from 'sonner';
-import { Car, Passenger, RegistrationData } from './types';
+import { Car, Passenger, RegistrationData, Event } from './types';
 
 // Re-export types for backward compatibility
 export type { Car, Passenger, RegistrationData } from './types';
@@ -30,6 +30,7 @@ export default function App() {
   const [pageSettings, setPageSettings] = useState(DEFAULT_SETTINGS);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
   // Check for existing auth session on load
   useEffect(() => {
@@ -62,7 +63,13 @@ export default function App() {
       setPageSettings(settings);
     };
 
+    const loadActiveEvent = async () => {
+      const event = await storageService.getActiveEvent();
+      setActiveEvent(event);
+    };
+
     loadSettings();
+    loadActiveEvent();
 
     // Listen for settings changes via Supabase real-time
     const channel = supabase
@@ -128,13 +135,20 @@ export default function App() {
       ...data,
       registrationId: `TD-${Date.now()}`,
       registeredAt: new Date().toISOString(),
+      eventId: activeEvent?.id, // Associate registration with active event
     };
 
     // Generate PDF Waiver
     try {
       const pdfBlob = await pdfService.generateWaiverPdf(newRegistration, pageSettings);
       const driverName = `${newRegistration.firstName}_${newRegistration.lastName}`;
-      const pdfUrl = await storageService.uploadWaiver(pdfBlob, driverName, newRegistration.date || new Date().toISOString().split('T')[0]);
+      // Pass eventId to uploadWaiver for organized storage
+      const pdfUrl = await storageService.uploadWaiver(
+        pdfBlob,
+        driverName,
+        newRegistration.date || new Date().toISOString().split('T')[0],
+        activeEvent?.id
+      );
 
       if (pdfUrl) {
         newRegistration.waiverPdfUrl = pdfUrl;

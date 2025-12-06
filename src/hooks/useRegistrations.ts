@@ -1,21 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RegistrationData } from '../App';
 import { toast } from 'sonner';
 import { storageService } from '../services/storageService';
 
-export function useRegistrations() {
+export function useRegistrations(eventId?: string | null) {
     const [registrations, setRegistrations] = useState<RegistrationData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        loadRegistrations();
-    }, []);
-
-    const loadRegistrations = async () => {
+    const loadRegistrations = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Load in natural order, then reverse for display (newest first)
-            const data = await storageService.getRegistrations();
+            // Load registrations filtered by event if eventId is provided
+            const data = eventId
+                ? await storageService.getRegistrationsByEvent(eventId)
+                : await storageService.getRegistrations();
             setRegistrations([...data].reverse());
         } catch (error) {
             console.error('Failed to load registrations:', error);
@@ -23,7 +21,11 @@ export function useRegistrations() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [eventId]);
+
+    useEffect(() => {
+        loadRegistrations();
+    }, [loadRegistrations]);
 
     const deleteRegistration = async (registrationId: string) => {
         if (confirm('Are you sure you want to delete this registration?')) {
@@ -58,7 +60,12 @@ export function useRegistrations() {
     };
 
     const addRegistration = async (registration: RegistrationData) => {
-        const success = await storageService.addRegistration(registration);
+        // Add event ID to the registration if provided
+        const registrationWithEvent = eventId
+            ? { ...registration, eventId }
+            : registration;
+
+        const success = await storageService.addRegistration(registrationWithEvent);
         if (success) {
             await loadRegistrations();
             toast.success('Registration added successfully!');

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { RegistrationData, PageSettings, DbRegistration, DbSettings } from '../types';
+import { RegistrationData, PageSettings, DbRegistration, DbSettings, Event, DbEvent } from '../types';
 import { toast } from 'sonner';
 
 export class SupabaseStorageService {
@@ -157,19 +157,174 @@ export class SupabaseStorageService {
         }
     }
 
+    // --- Event Management ---
+
     /**
-     * Upload a waiver PDF
+     * Get all events
      */
-    async uploadWaiver(blob: Blob, driverName: string, eventDate: string): Promise<string | null> {
+    async getEvents(): Promise<Event[]> {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            return (data || []).map(this.mapToEvent);
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get the currently active event
+     */
+    async getActiveEvent(): Promise<Event | null> {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .select('*')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // No active event found
+                    return null;
+                }
+                throw error;
+            }
+
+            return this.mapToEvent(data);
+        } catch (error) {
+            console.error('Error fetching active event:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Create a new event
+     */
+    async createEvent(name: string, startDate?: string, endDate?: string): Promise<Event | null> {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .insert([{
+                    name,
+                    start_date: startDate || null,
+                    end_date: endDate || null,
+                    status: 'active'
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            toast.success(`Event "${name}" created successfully`);
+            return this.mapToEvent(data);
+        } catch (error) {
+            console.error('Error creating event:', error);
+            toast.error('Failed to create event');
+            return null;
+        }
+    }
+
+    /**
+     * Archive an event (makes it read-only)
+     */
+    async archiveEvent(eventId: string): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('events')
+                .update({
+                    status: 'archived',
+                    archived_at: new Date().toISOString()
+                })
+                .eq('id', eventId);
+
+            if (error) throw error;
+
+            toast.success('Event archived successfully');
+            return true;
+        } catch (error) {
+            console.error('Error archiving event:', error);
+            toast.error('Failed to archive event');
+            return false;
+        }
+    }
+
+    /**
+     * Update an event
+     */
+    async updateEvent(eventId: string, updates: { name?: string; startDate?: string; endDate?: string }): Promise<boolean> {
+        try {
+            const dbUpdates: any = {};
+            if (updates.name !== undefined) dbUpdates.name = updates.name;
+            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+            if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+
+            const { error } = await supabase
+                .from('events')
+                .update(dbUpdates)
+                .eq('id', eventId);
+
+            if (error) throw error;
+
+            toast.success('Event updated successfully');
+            return true;
+        } catch (error) {
+            console.error('Error updating event:', error);
+            toast.error('Failed to update event');
+            return false;
+        }
+    }
+
+    /**
+     * Get registrations, optionally filtered by event
+     */
+    async getRegistrationsByEvent(eventId?: string): Promise<RegistrationData[]> {
+        try {
+            let query = supabase
+                .from('registrations')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (eventId) {
+                query = query.eq('event_id', eventId);
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+
+            return (data || []).map(this.mapToRegistrationData);
+        } catch (error) {
+            console.error('Error fetching registrations:', error);
+            toast.error('Failed to load registrations from database');
+            return [];
+        }
+    }
+
+    /**
+     * Upload a waiver PDF (organized by event)
+     */
+    async uploadWaiver(blob: Blob, driverName: string, eventDate: string, eventId?: string): Promise<string | null> {
         try {
             // Create filename from driver name and date: "John_Doe_2024-12-03.pdf"
             const safeName = driverName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
             const safeDate = eventDate.replace(/[^a-zA-Z0-9-]/g, '_');
             const fileName = `${safeName}_${safeDate}.pdf`;
 
+            // Organize by event folder if event ID is provided
+            const filePath = eventId ? `${eventId}/${fileName}` : fileName;
+
             const { data, error } = await supabase.storage
                 .from('waivers')
-                .upload(fileName, blob, {
+                .upload(filePath, blob, {
                     contentType: 'application/pdf',
                     upsert: true
                 });
@@ -179,7 +334,7 @@ export class SupabaseStorageService {
             // Get public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('waivers')
-                .getPublicUrl(fileName);
+                .getPublicUrl(filePath);
 
             return publicUrl;
         } catch (error) {
@@ -450,6 +605,7 @@ export class SupabaseStorageService {
             communicationOptIn: dbRow.communication_opt_in,
             additionalPassengers: dbRow.additional_passengers || [],
             waiverPdfUrl: dbRow.waiver_pdf_url,
+            eventId: dbRow.event_id || undefined,
         };
     }
 
@@ -473,6 +629,7 @@ export class SupabaseStorageService {
             communication_opt_in: data.communicationOptIn,
             additional_passengers: data.additionalPassengers,
             waiver_pdf_url: data.waiverPdfUrl,
+            event_id: data.eventId || null,
         };
     }
 
@@ -507,6 +664,20 @@ export class SupabaseStorageService {
             eventDates: dbRow.event_dates || [],
             timeSlots: dbRow.time_slots || [],
             cars: dbRow.cars || [],
+            completionSmsEnabled: (dbRow as any).completion_sms_enabled ?? false,
+            completionSmsMessage: (dbRow as any).completion_sms_message ?? '',
+        };
+    }
+
+    private mapToEvent(dbRow: DbEvent): Event {
+        return {
+            id: dbRow.id,
+            name: dbRow.name,
+            startDate: dbRow.start_date || undefined,
+            endDate: dbRow.end_date || undefined,
+            status: dbRow.status,
+            archivedAt: dbRow.archived_at || undefined,
+            createdAt: dbRow.created_at,
         };
     }
 
