@@ -87,9 +87,7 @@ function AppContent() {
 
         // Load event-specific settings if we have an event
         if (event?.id) {
-          console.log('Loading settings for event:', event.id, event.name, 'Type:', event.eventType);
           const eventSettings = await storageService.getEventSettings(event.id, DEFAULT_SETTINGS);
-          console.log('Loaded event settings:', eventSettings);
           setPageSettings({
             heroTitle: eventSettings.heroTitle,
             heroSubtitle: eventSettings.heroSubtitle,
@@ -104,7 +102,6 @@ function AppContent() {
           });
         } else {
           // No events exist, fall back to global settings
-          console.log('No events found, using global settings');
           const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
           setPageSettings(settings);
         }

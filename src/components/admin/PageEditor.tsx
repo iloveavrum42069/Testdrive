@@ -72,9 +72,7 @@ export function PageEditor({ onSave, eventId, isReadOnly = false }: PageEditorPr
   const loadSettings = async () => {
     // If eventId is provided, load event-specific settings
     if (eventId) {
-      console.log('PageEditor: Loading settings for eventId:', eventId);
       const eventSettings = await storageService.getEventSettings(eventId, DEFAULT_SETTINGS);
-      console.log('PageEditor: Loaded settings:', eventSettings);
       setSettings({
         heroTitle: eventSettings.heroTitle,
         heroSubtitle: eventSettings.heroSubtitle,
@@ -89,7 +87,6 @@ export function PageEditor({ onSave, eventId, isReadOnly = false }: PageEditorPr
       });
     } else {
       // Fall back to global settings
-      console.log('PageEditor: No eventId, loading global settings');
       const saved = await storageService.getPageSettings(DEFAULT_SETTINGS);
       setSettings(saved);
     }
@@ -102,7 +99,6 @@ export function PageEditor({ onSave, eventId, isReadOnly = false }: PageEditorPr
 
     let success = false;
     if (eventId) {
-      console.log('PageEditor: Saving to event_settings for eventId:', eventId);
       success = await storageService.setEventSettings(eventId, {
         eventId,
         heroTitle: settings.heroTitle,
@@ -117,7 +113,6 @@ export function PageEditor({ onSave, eventId, isReadOnly = false }: PageEditorPr
         completionSmsMessage: settings.completionSmsMessage,
       });
     } else {
-      console.log('PageEditor: Saving to global settings');
       success = await storageService.setPageSettings(settings);
     }
 

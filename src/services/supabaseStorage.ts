@@ -396,7 +396,6 @@ export class SupabaseStorageService {
     async setEventSettings(eventId: string, settings: EventSettings): Promise<boolean> {
         try {
             const dbData = this.mapToDbEventSettings(settings);
-            console.log('Saving event settings for eventId:', eventId, 'data:', dbData);
 
             const { data, error } = await supabase
                 .from('event_settings')
@@ -413,7 +412,6 @@ export class SupabaseStorageService {
                 throw error;
             }
 
-            console.log('Event settings saved successfully:', data);
             return true;
         } catch (error) {
             console.error('Error saving event settings:', error);
