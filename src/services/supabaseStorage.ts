@@ -207,20 +207,41 @@ export class SupabaseStorageService {
      */
     async createEvent(name: string, startDate?: string, endDate?: string): Promise<Event | null> {
         try {
+            // First, unset any existing primary event
+            await supabase
+                .from('events')
+                .update({ is_primary: false })
+                .eq('is_primary', true);
+
+            // Create the new event as primary
             const { data, error } = await supabase
                 .from('events')
                 .insert([{
                     name,
                     start_date: startDate || null,
                     end_date: endDate || null,
-                    status: 'active'
+                    status: 'active',
+                    is_primary: true  // New events become primary automatically
                 }])
                 .select()
                 .single();
 
             if (error) throw error;
 
-            toast.success(`Event "${name}" created successfully`);
+            // Create empty event_settings for this event so it can be configured
+            await supabase
+                .from('event_settings')
+                .insert([{
+                    event_id: data.id,
+                    hero_title: 'Test Drive Experience',
+                    hero_subtitle: 'Register for your exclusive test drive',
+                    footer_text: '© 2025 Traxion Events. All rights reserved.',
+                    event_dates: [],
+                    time_slots: [],
+                    cars: []
+                }]);
+
+            toast.success(`Event "${name}" created and set as primary`);
             return this.mapToEvent(data);
         } catch (error) {
             console.error('Error creating event:', error);
@@ -374,21 +395,28 @@ export class SupabaseStorageService {
     async setEventSettings(eventId: string, settings: EventSettings): Promise<boolean> {
         try {
             const dbData = this.mapToDbEventSettings(settings);
+            console.log('Saving event settings for eventId:', eventId, 'data:', dbData);
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('event_settings')
                 .upsert({
                     event_id: eventId,
                     ...dbData
                 }, {
                     onConflict: 'event_id'
-                });
+                })
+                .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error saving event settings:', error);
+                throw error;
+            }
+
+            console.log('Event settings saved successfully:', data);
             return true;
         } catch (error) {
             console.error('Error saving event settings:', error);
-            toast.error('Failed to save event settings');
+            toast.error('Failed to save event settings: ' + (error as any)?.message || 'Unknown error');
             return false;
         }
     }

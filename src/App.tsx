@@ -71,13 +71,21 @@ function AppContent() {
   useEffect(() => {
     const loadEventAndSettings = async () => {
       try {
-        // Get the primary event (the one marked for public use)
-        const event = await storageService.getPrimaryEvent();
+        // Try to get the primary event first, fall back to any active event
+        let event = await storageService.getPrimaryEvent();
+
+        // If no primary event, get any active event
+        if (!event) {
+          event = await storageService.getActiveEvent();
+        }
+
         setActiveEvent(event);
 
-        // Load event-specific settings if we have a primary event
+        // Load event-specific settings if we have an event
         if (event?.id) {
+          console.log('Loading settings for event:', event.id, event.name);
           const eventSettings = await storageService.getEventSettings(event.id, DEFAULT_SETTINGS);
+          console.log('Loaded event settings:', eventSettings);
           setPageSettings({
             heroTitle: eventSettings.heroTitle,
             heroSubtitle: eventSettings.heroSubtitle,
@@ -91,13 +99,14 @@ function AppContent() {
             completionSmsMessage: eventSettings.completionSmsMessage,
           });
         } else {
-          // Fall back to global settings if no primary event
+          // No events exist, fall back to global settings
+          console.log('No events found, using global settings');
           const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
           setPageSettings(settings);
         }
       } catch (error) {
-        // Events table might not exist yet, fall back to global settings
-        console.log('Events not configured yet, using global settings');
+        console.error('Error loading event settings:', error);
+        // Fall back to global settings on error
         const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
         setPageSettings(settings);
       }
