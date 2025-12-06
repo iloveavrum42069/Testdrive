@@ -12,7 +12,7 @@ const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').th
 import { getPageSettings, DEFAULT_SETTINGS } from './components/admin/PageEditor';
 import { Toaster } from './components/shared/ui/sonner';
 import { storageService } from './services/storageService';
-import { pdfService } from './services/pdfService';
+
 import { authService } from './services/authService';
 import { supabase } from './lib/supabase';
 import { toast } from 'sonner';
@@ -21,7 +21,18 @@ import { Car, Passenger, RegistrationData, Event } from './types';
 // Re-export types for backward compatibility
 export type { Car, Passenger, RegistrationData } from './types';
 
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/react-query';
+
 export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+}
+
+function AppContent() {
   const [step, setStep] = useState(1);
   const [registrationData, setRegistrationData] = useState<RegistrationData>({});
   const [view, setView] = useState<'registration' | 'admin-login' | 'admin-dashboard'>('registration');
@@ -145,6 +156,8 @@ export default function App() {
 
     // Generate PDF Waiver
     try {
+      // Dynamic import to reduce initial bundle size
+      const { pdfService } = await import('./services/pdfService');
       const pdfBlob = await pdfService.generateWaiverPdf(newRegistration, pageSettings);
       const driverName = `${newRegistration.firstName}_${newRegistration.lastName}`;
       const pdfUrl = await storageService.uploadWaiver(

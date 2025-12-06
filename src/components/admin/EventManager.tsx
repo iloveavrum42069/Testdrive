@@ -7,7 +7,7 @@ import { formatDateLong } from '../../utils/formatters';
 
 interface EventManagerProps {
     selectedEventId: string | null;
-    onEventChange: (eventId: string | null) => void;
+    onEventChange: (eventId: string | null, event: Event | null) => void;
 }
 
 export function EventManager({ selectedEventId, onEventChange }: EventManagerProps) {
@@ -49,7 +49,8 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
             if (newEvent) {
                 setEvents(prev => [newEvent, ...prev]);
-                onEventChange(newEvent.id);
+                setEvents(prev => [newEvent, ...prev]);
+                onEventChange(newEvent.id, newEvent);
                 setShowCreateModal(false);
                 setNewEventName('');
                 setNewEventStartDate('');
@@ -81,7 +82,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
                 if (selectedEventId === eventId) {
                     const nextActive = events.find(e => e.id !== eventId && e.status === 'active');
-                    onEventChange(nextActive?.id || null);
+                    onEventChange(nextActive?.id || null, nextActive || null);
                 }
             }
         } catch (error) {
@@ -139,7 +140,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                 {/* All Registrations Option */}
                                 <button
                                     onClick={() => {
-                                        onEventChange(null);
+                                        onEventChange(null, null);
                                         setShowDropdown(false);
                                     }}
                                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
@@ -163,7 +164,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                             <button
                                                 key={event.id}
                                                 onClick={() => {
-                                                    onEventChange(event.id);
+                                                    onEventChange(event.id, event);
                                                     setShowDropdown(false);
                                                 }}
                                                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
@@ -190,7 +191,7 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
                                             <button
                                                 key={event.id}
                                                 onClick={() => {
-                                                    onEventChange(event.id);
+                                                    onEventChange(event.id, event);
                                                     setShowDropdown(false);
                                                 }}
                                                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors opacity-60"
@@ -240,18 +241,36 @@ export function EventManager({ selectedEventId, onEventChange }: EventManagerPro
 
                 {/* Event Info Footer */}
                 {selectedEvent && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-4 text-sm text-slate-500">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${selectedEvent.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-100 text-slate-500'
-                            }`}>
-                            {selectedEvent.status === 'active' ? 'Active' : 'Archived'}
-                        </span>
-                        {selectedEvent.startDate && (
-                            <span>Starts: {formatDateLong(selectedEvent.startDate)}</span>
-                        )}
-                        {selectedEvent.endDate && (
-                            <span>Ends: {formatDateLong(selectedEvent.endDate)}</span>
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-4 text-sm text-slate-500">
+                        <div className="flex items-center gap-4">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${selectedEvent.status === 'active'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                {selectedEvent.status === 'active' ? (
+                                    <>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                        Active
+                                    </>
+                                ) : (
+                                    <>
+                                        <Archive className="w-3 h-3" />
+                                        Archived (Read Only)
+                                    </>
+                                )}
+                            </span>
+                            {selectedEvent.startDate && (
+                                <span>Starts: {formatDateLong(selectedEvent.startDate)}</span>
+                            )}
+                            {selectedEvent.endDate && (
+                                <span>Ends: {formatDateLong(selectedEvent.endDate)}</span>
+                            )}
+                        </div>
+
+                        {selectedEvent.status === 'archived' && (
+                            <span className="text-xs text-amber-600 font-medium">
+                                Modifications disabled
+                            </span>
                         )}
                     </div>
                 )}

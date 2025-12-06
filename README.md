@@ -140,7 +140,9 @@ WHERE email = 'your_email@example.com';
 
 ## Security
 
-- Row Level Security (RLS) on all tables
+- Row Level Security (RLS) on all tables:
+  - **Events**: Public (Read Active), Regular Admin (Read Active), Super Admin (Read All + Write)
+  - **Registrations**: Admin (Read/Write)
 - Security headers in `vercel.json`
 - Admin routes protected by Supabase Auth
 

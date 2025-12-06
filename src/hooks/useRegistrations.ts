@@ -1,40 +1,95 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RegistrationData } from '../App';
 import { toast } from 'sonner';
 import { storageService } from '../services/storageService';
 
 export function useRegistrations(eventId?: string | null) {
-    const [registrations, setRegistrations] = useState<RegistrationData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const loadRegistrations = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            // Always load all registrations for now
-            // Event filtering will be added once database is fully set up
+    // Query for fetching registrations
+    const {
+        data: registrations = [],
+        isLoading,
+        error
+    } = useQuery({
+        queryKey: ['registrations', eventId],
+        queryFn: async () => {
+            // Eventually use eventId here when backend supports it fully
+            // const data = eventId 
+            //     ? await storageService.getRegistrationsByEvent(eventId)
+            //     : await storageService.getRegistrations();
+
+            // For now, always fetch all as per previous logic
             const data = await storageService.getRegistrations();
-            setRegistrations([...data].reverse());
-        } catch (error) {
-            console.error('Failed to load registrations:', error);
-            toast.error('Failed to load registrations');
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+            return [...data].reverse();
+        },
+        staleTime: 1000 * 60, // 1 minute stale time
+    });
 
-    useEffect(() => {
-        loadRegistrations();
-    }, [loadRegistrations]);
+    if (error) {
+        console.error('Failed to load registrations:', error);
+        toast.error('Failed to load registrations');
+    }
 
+    // Mutations
+    const deleteMutation = useMutation({
+        mutationFn: storageService.deleteRegistration,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            toast.success('Registration deleted');
+        },
+        onError: () => toast.error('Failed to delete registration'),
+    });
+
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+            return storageService.updateRegistration(id, { completed });
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            toast.success(variables.completed
+                ? 'Test drive marked as complete!'
+                : 'Test drive marked as incomplete'
+            );
+        },
+        onError: () => toast.error('Failed to update status'),
+    });
+
+    const addMutation = useMutation({
+        mutationFn: async (registration: RegistrationData) => {
+            const registrationWithEvent = eventId
+                ? { ...registration, eventId }
+                : registration;
+            return storageService.addRegistration(registrationWithEvent);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            toast.success('Registration added successfully!');
+        },
+        onError: () => toast.error('Failed to add registration'),
+    });
+
+    const verifyLicenseMutation = useMutation({
+        mutationFn: async ({ id, initials }: { id: string; initials: string }) => {
+            const updates = {
+                licenseVerified: true,
+                licenseVerifiedBy: initials,
+                licenseVerifiedAt: new Date().toISOString()
+            };
+            return storageService.updateRegistration(id, updates);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            toast.success('Driver\'s license verified successfully!');
+        },
+        onError: () => toast.error('Failed to verify license'),
+    });
+
+    // Wrapper functions to maintain API compatibility
     const deleteRegistration = async (registrationId: string) => {
         if (confirm('Are you sure you want to delete this registration?')) {
-            const success = await storageService.deleteRegistration(registrationId);
-            if (success) {
-                await loadRegistrations();
-                return true;
-            } else {
-                toast.error('Failed to delete registration');
-            }
+            await deleteMutation.mutateAsync(registrationId);
+            return true;
         }
         return false;
     };
@@ -42,61 +97,24 @@ export function useRegistrations(eventId?: string | null) {
     const toggleComplete = async (registrationId: string) => {
         const registration = registrations.find(r => r.registrationId === registrationId);
         if (!registration) return;
-
-        const newStatus = !registration.completed;
-        const success = await storageService.updateRegistration(registrationId, { completed: newStatus });
-
-        if (success) {
-            await loadRegistrations();
-            toast.success(newStatus
-                ? 'Test drive marked as complete!'
-                : 'Test drive marked as incomplete'
-            );
-            return { ...registration, completed: newStatus };
-        } else {
-            toast.error('Failed to update status');
-        }
+        await updateStatusMutation.mutateAsync({
+            id: registrationId,
+            completed: !registration.completed
+        });
     };
 
     const addRegistration = async (registration: RegistrationData) => {
-        // Add event ID to the registration if provided
-        const registrationWithEvent = eventId
-            ? { ...registration, eventId }
-            : registration;
-
-        const success = await storageService.addRegistration(registrationWithEvent);
-        if (success) {
-            await loadRegistrations();
-            toast.success('Registration added successfully!');
-        } else {
-            toast.error('Failed to add registration');
-        }
+        await addMutation.mutateAsync(registration);
     };
 
     const verifyLicense = async (registrationId: string, initials: string) => {
-        const updates = {
-            licenseVerified: true,
-            licenseVerifiedBy: initials,
-            licenseVerifiedAt: new Date().toISOString()
-        };
-
-        const success = await storageService.updateRegistration(registrationId, updates);
-
-        if (success) {
-            await loadRegistrations();
-            toast.success('Driver\'s license verified successfully!');
-
-            const registration = registrations.find(r => r.registrationId === registrationId);
-            return registration ? { ...registration, ...updates } : undefined;
-        } else {
-            toast.error('Failed to verify license');
-        }
+        await verifyLicenseMutation.mutateAsync({ id: registrationId, initials });
     };
 
     return {
         registrations,
         isLoading,
-        loadRegistrations,
+        loadRegistrations: () => queryClient.invalidateQueries({ queryKey: ['registrations'] }), // Manual refresh
         deleteRegistration,
         toggleComplete,
         addRegistration,

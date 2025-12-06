@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { RegistrationData } from '../../App';
+import { Event } from '../../types';
 import { LogOut, Search, Download, Grid3x3, List, Settings, Plus } from 'lucide-react';
 import { ScheduleGrid } from './ScheduleGrid';
 import { PageEditor, getPageSettings } from './PageEditor';
@@ -23,6 +24,7 @@ interface AdminDashboardProps {
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   // Event management state (super_admin only)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   // Get registrations - filtered by event if super_admin has one selected
   const {
@@ -70,15 +72,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const handleToggleComplete = async (id: string) => {
     const registration = registrations.find(r => r.registrationId === id);
-    const wasCompleted = registration?.completed;
+    if (!registration) return;
 
-    const updated = await toggleComplete(id);
-    if (selectedRegistration?.registrationId === id && updated) {
-      setSelectedRegistration(updated);
+    const wasCompleted = registration.completed;
+    const newStatus = !wasCompleted;
+
+    // Call mutation (returns void now)
+    await toggleComplete(id);
+
+    // Optimistically update selected registration if it's the one open
+    if (selectedRegistration?.registrationId === id) {
+      setSelectedRegistration({ ...selectedRegistration, completed: newStatus });
     }
 
     // Send completion SMS if marking as complete (not incomplete) and feature is enabled
-    if (!wasCompleted && updated?.completed && registration?.phone) {
+    // Note: We use newStatus here instead of updated?.completed
+    if (!wasCompleted && newStatus && registration.phone) {
       try {
         const settings = await getPageSettings();
         if (settings.completionSmsEnabled && settings.completionSmsMessage) {
@@ -103,10 +112,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   const handleVerify = (id: string, initials: string) => {
-    const updated = verifyLicense(id, initials);
-    if (selectedRegistration?.registrationId === id && updated) {
-      setSelectedRegistration(updated);
-    }
+    verifyLicense(id, initials);
+    // React Query will update the UI automatically
     setShowVerifyModal(false);
   };
 
@@ -116,7 +123,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       {isSuperAdmin && (
         <EventManager
           selectedEventId={selectedEventId}
-          onEventChange={setSelectedEventId}
+          onEventChange={(id, event) => {
+            setSelectedEventId(id);
+            setSelectedEvent(event);
+            if (event?.status === 'archived' && viewMode === 'editor') {
+              setViewMode('list'); // Force exit editor mode if switching to archive
+            }
+          }}
         />
       )}
 
@@ -186,25 +199,44 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
             {/* Only show Page Editor to super_admin */}
             {isSuperAdmin && (
-              <button
-                onClick={() => setViewMode('editor')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'editor' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                  }`}
-              >
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Page Editor</span>
-                <span className="sm:hidden">Editor</span>
-              </button>
+              <div className="relative group">
+                <button
+                  onClick={() => setViewMode('editor')}
+                  disabled={selectedEvent?.status === 'archived'}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${viewMode === 'editor'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                    } ${selectedEvent?.status === 'archived' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Page Editor</span>
+                  <span className="sm:hidden">Editor</span>
+                </button>
+                {selectedEvent?.status === 'archived' && (
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 text-center">
+                    Page Editor disabled for archived events
+                  </div>
+                )}
+              </div>
             )}
 
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Registration</span>
-              <span className="sm:hidden">Add</span>
-            </button>
+            <div className="relative group">
+              <button
+                onClick={() => setShowAddModal(true)}
+                disabled={selectedEvent?.status === 'archived'}
+                className={`flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm ${selectedEvent?.status === 'archived' ? 'opacity-50 cursor-not-allowed bg-slate-400 hover:bg-slate-400' : ''
+                  }`}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Registration</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+              {selectedEvent?.status === 'archived' && (
+                <div className="absolute bottom-full mb-2 right-0 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 text-center">
+                  Cannot add registrations to archived events
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
