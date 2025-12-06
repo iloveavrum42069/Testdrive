@@ -38,6 +38,7 @@ function AppContent() {
   const [view, setView] = useState<'registration' | 'admin-login' | 'admin-dashboard'>('registration');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
   const [pageSettings, setPageSettings] = useState(DEFAULT_SETTINGS);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
@@ -70,6 +71,7 @@ function AppContent() {
 
   useEffect(() => {
     const loadEventAndSettings = async () => {
+      setIsSettingsLoading(true);
       try {
         // Try to get the primary event first, fall back to any active event
         let event = await storageService.getPrimaryEvent();
@@ -109,6 +111,8 @@ function AppContent() {
         // Fall back to global settings on error
         const settings = await storageService.getPageSettings(DEFAULT_SETTINGS);
         setPageSettings(settings);
+      } finally {
+        setIsSettingsLoading(false);
       }
     };
 
@@ -290,7 +294,14 @@ function AppContent() {
           </Suspense>
         )}
 
-        {view === 'registration' && (
+        {view === 'registration' && isSettingsLoading && (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-slate-600">Loading event details...</p>
+          </div>
+        )}
+
+        {view === 'registration' && !isSettingsLoading && (
           <>
             <ProgressIndicator currentStep={step} totalSteps={totalSteps} />
 
@@ -399,6 +410,6 @@ function AppContent() {
           )}
         </footer>
       </div>
-    </div>
+    </div >
   );
 }
