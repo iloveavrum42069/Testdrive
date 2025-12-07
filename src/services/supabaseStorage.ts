@@ -27,8 +27,27 @@ export class SupabaseStorageService {
     /**
      * Add a new registration
      */
-    async addRegistration(registration: RegistrationData): Promise<boolean> {
+    async addRegistration(registration: RegistrationData): Promise<boolean | 'validation_error'> {
         try {
+            // CRITICAL: Server-side validation for required legal fields
+            const requiredFields = {
+                firstName: registration.firstName?.trim(),
+                lastName: registration.lastName?.trim(),
+                email: registration.email?.trim(),
+                phone: registration.phone?.trim(),
+                signature: registration.signature,
+            };
+
+            const missingFields = Object.entries(requiredFields)
+                .filter(([_, value]) => !value)
+                .map(([key]) => key);
+
+            if (missingFields.length > 0) {
+                console.error('VALIDATION ERROR: Missing required fields:', missingFields);
+                toast.error(`Missing required information: ${missingFields.join(', ')}. Please go back and complete all fields.`);
+                return 'validation_error';
+            }
+
             const dbData = this.mapToDbRegistration(registration);
             // Remove id to let Supabase generate it
             const { id, ...insertData } = dbData as any;
@@ -41,12 +60,14 @@ export class SupabaseStorageService {
             return true;
         } catch (error: unknown) {
             console.error('Error adding registration:', error);
-            // Check for rate limit error
+            // Check for rate limit error from database trigger
             const errorMessage = error instanceof Error ? error.message : String(error);
             if (errorMessage.includes('Rate limit exceeded')) {
-                toast.error('This email was already used to register recently. Please wait an hour or use a different email.');
+                // Don't show duplicate toast - caller will handle it
+                // Return a special indicator for rate limit
+                return 'rate_limited' as unknown as boolean;
             } else {
-                toast.error('Failed to save registration');
+                toast.error('Failed to save registration. Please try again.');
             }
             return false;
         }

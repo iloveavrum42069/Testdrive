@@ -206,11 +206,16 @@ function AppContent() {
       eventId: activeEvent?.id, // Associate with active event if one exists
     };
 
-    // Generate PDF Waiver
+    // Generate PDF Waiver - REQUIRED for legal protection
     try {
       // Dynamic import to reduce initial bundle size
       const { pdfService } = await import('./services/pdfService');
       const pdfBlob = await pdfService.generateWaiverPdf(newRegistration, pageSettings);
+
+      if (!pdfBlob) {
+        throw new Error('PDF generation returned empty result');
+      }
+
       const driverName = `${newRegistration.firstName}_${newRegistration.lastName}`;
       const pdfUrl = await storageService.uploadWaiver(
         pdfBlob,
@@ -219,15 +224,35 @@ function AppContent() {
         activeEvent?.id // Organize waivers by event
       );
 
-      if (pdfUrl) {
-        newRegistration.waiverPdfUrl = pdfUrl;
+      if (!pdfUrl) {
+        throw new Error('Failed to upload waiver PDF to storage');
       }
+
+      newRegistration.waiverPdfUrl = pdfUrl;
     } catch (error) {
-      console.error('Failed to generate or upload waiver PDF:', error);
+      console.error('CRITICAL: Failed to generate or upload waiver PDF:', error);
+      toast.error('Unable to save your signed waiver. Please try again. If the problem persists, contact event staff.');
+      return false; // BLOCK registration - waiver is legally required
     }
 
-    const success = await storageService.addRegistration(newRegistration);
-    if (!success) {
+    const result = await storageService.addRegistration(newRegistration);
+
+    // Check for rate limiting (returns 'rate_limited' string)
+    if (result === 'rate_limited' as unknown as boolean) {
+      toast.error(
+        'You have already registered with this email address. To prevent duplicate registrations, please wait 1 hour before registering again, or use a different email address.',
+        { duration: 8000 }
+      );
+      return false;
+    }
+
+    // Check for validation error (returns 'validation_error' string)
+    if (result === 'validation_error') {
+      // Toast already shown in storage service
+      return false;
+    }
+
+    if (!result) {
       console.error('Failed to save registration');
       toast.error('Failed to save registration. Please try again.');
       return false;
