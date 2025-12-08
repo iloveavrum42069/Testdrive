@@ -307,6 +307,9 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                 ref={mainCanvasRef}
                 width={600}
                 height={150}
+                tabIndex={0}
+                role="img"
+                aria-label="Signature pad for primary driver. Use mouse or touch to draw your signature."
                 onMouseDown={(e) => startDrawing(e, mainCanvasRef)}
                 onMouseMove={(e) => draw(e, mainCanvasRef)}
                 onMouseUp={stopDrawing}
@@ -314,7 +317,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                 onTouchStart={(e) => startDrawing(e, mainCanvasRef)}
                 onTouchMove={(e) => draw(e, mainCanvasRef)}
                 onTouchEnd={stopDrawing}
-                className="w-full h-32 sm:h-40 touch-none cursor-crosshair"
+                className="w-full h-32 sm:h-40 touch-none cursor-crosshair focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 style={{ touchAction: 'none' }}
               />
             </div>
@@ -427,6 +430,9 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                       }}
                       width={600}
                       height={120}
+                      tabIndex={0}
+                      role="img"
+                      aria-label={`Signature pad for ${passenger.name}. ${!passenger.isOver18 ? 'Parent or guardian must sign.' : 'Use mouse or touch to draw signature.'}`}
                       onMouseDown={(e) => {
                         const canvas = passengerCanvasRefs.current.get(index);
                         if (canvas) {
@@ -458,7 +464,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                         }
                       }}
                       onTouchEnd={stopDrawing}
-                      className="w-full h-28 sm:h-32 touch-none cursor-crosshair"
+                      className="w-full h-28 sm:h-32 touch-none cursor-crosshair focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ touchAction: 'none' }}
                     />
                   </div>
@@ -523,6 +529,9 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                           }}
                           width={600}
                           height={120}
+                          tabIndex={0}
+                          role="img"
+                          aria-label={`Parental consent signature pad for ${passenger.name}. Parent or guardian must sign to authorize minor participation.`}
                           onMouseDown={(e) => {
                             const canvas = parentalConsentCanvasRefs.current.get(index);
                             if (canvas) {
@@ -554,7 +563,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
                             }
                           }}
                           onTouchEnd={stopDrawing}
-                          className="w-full h-28 sm:h-32 touch-none cursor-crosshair"
+                          className="w-full h-28 sm:h-32 touch-none cursor-crosshair focus:ring-2 focus:ring-blue-500 focus:outline-none"
                           style={{ touchAction: 'none' }}
                         />
                       </div>

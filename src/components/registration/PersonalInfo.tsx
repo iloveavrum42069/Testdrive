@@ -144,9 +144,9 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
 
         <div>
           <label htmlFor="email" className="flex items-center gap-2 text-slate-700 mb-2">
-            <Mail className="w-4 h-4 text-blue-600" />
+            <Mail className="w-4 h-4 text-blue-600" aria-hidden="true" />
             <span>Email Address</span>
-            {email && isEmailValid && <Check className="w-4 h-4 text-green-600 ml-auto animate-in zoom-in duration-200" />}
+            {email && isEmailValid && <Check className="w-4 h-4 text-green-600 ml-auto animate-in zoom-in duration-200" aria-hidden="true" />}
           </label>
           <input
             id="email"
@@ -154,15 +154,18 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-required="true"
+            aria-invalid={emailTouched && !isEmailValid}
+            aria-describedby={emailTouched && !isEmailValid ? "email-error" : undefined}
             className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${emailTouched && !isEmailValid
-                ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+              : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
               }`}
             placeholder="john.doe@example.com"
             onBlur={() => setEmailTouched(true)}
           />
           {emailTouched && !isEmailValid && (
-            <p className="text-red-600 text-sm mt-1 animate-in slide-in-from-top-1 duration-200">
+            <p id="email-error" role="alert" className="text-red-600 text-sm mt-1 animate-in slide-in-from-top-1 duration-200">
               Please enter a valid email address.
             </p>
           )}
@@ -170,9 +173,9 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
 
         <div>
           <label htmlFor="phone" className="flex items-center gap-2 text-slate-700 mb-2">
-            <Phone className="w-4 h-4 text-blue-600" />
+            <Phone className="w-4 h-4 text-blue-600" aria-hidden="true" />
             <span>Phone Number</span>
-            {phone && isPhoneValid && <Check className="w-4 h-4 text-green-600 ml-auto animate-in zoom-in duration-200" />}
+            {phone && isPhoneValid && <Check className="w-4 h-4 text-green-600 ml-auto animate-in zoom-in duration-200" aria-hidden="true" />}
           </label>
           <input
             id="phone"
@@ -180,15 +183,18 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required
+            aria-required="true"
+            aria-invalid={phoneTouched && !isPhoneValid}
+            aria-describedby={phoneTouched && !isPhoneValid ? "phone-error" : undefined}
             className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all duration-200 ${phoneTouched && !isPhoneValid
-                ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+              : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
               }`}
             placeholder="(555) 123-4567"
             onBlur={() => setPhoneTouched(true)}
           />
           {phoneTouched && !isPhoneValid && (
-            <p className="text-red-600 text-sm mt-1 animate-in slide-in-from-top-1 duration-200">
+            <p id="phone-error" role="alert" className="text-red-600 text-sm mt-1 animate-in slide-in-from-top-1 duration-200">
               Please enter a valid phone number (at least 10 digits).
             </p>
           )}
@@ -327,8 +333,8 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
                         type="button"
                         onClick={() => updatePassengerAge(index, true)}
                         className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${passenger.isOver18
-                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                            : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
                           }`}
                       >
                         Yes
@@ -337,8 +343,8 @@ export function PersonalInfo({ onNext, onBack, data }: PersonalInfoProps) {
                         type="button"
                         onClick={() => updatePassengerAge(index, false)}
                         className={`flex-1 px-4 py-2 border-2 rounded-lg transition-all duration-200 ${!passenger.isOver18
-                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                            : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-300 hover:border-blue-300 hover:bg-blue-50/50'
                           }`}
                       >
                         No

@@ -50,7 +50,7 @@ export function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) {
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" aria-hidden="true" />
               <input
                 id="email"
                 type="email"
@@ -60,6 +60,9 @@ export function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) {
                   setError('');
                 }}
                 required
+                aria-required="true"
+                aria-describedby={error ? "login-error" : undefined}
+                aria-invalid={!!error}
                 disabled={isLoading}
                 className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 hover:border-slate-300 disabled:bg-slate-50 disabled:cursor-not-allowed"
                 placeholder="admin@example.com"
@@ -73,7 +76,7 @@ export function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" aria-hidden="true" />
               <input
                 id="password"
                 type="password"
@@ -83,6 +86,9 @@ export function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) {
                   setError('');
                 }}
                 required
+                aria-required="true"
+                aria-describedby={error ? "login-error" : undefined}
+                aria-invalid={!!error}
                 disabled={isLoading}
                 className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 hover:border-slate-300 disabled:bg-slate-50 disabled:cursor-not-allowed"
                 placeholder="Enter your password"
@@ -91,8 +97,8 @@ export function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) {
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-red-600 bg-red-50 border-2 border-red-200 rounded-lg p-3 animate-in slide-in-from-top-2 duration-300">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div id="login-error" role="alert" className="flex items-center gap-2 text-red-600 bg-red-50 border-2 border-red-200 rounded-lg p-3 animate-in slide-in-from-top-2 duration-300">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <p className="text-sm">{error}</p>
             </div>
           )}

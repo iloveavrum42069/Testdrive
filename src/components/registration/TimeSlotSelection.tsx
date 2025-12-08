@@ -181,21 +181,42 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
 
       {/* Hold Timer */}
       {myHeldSlot && holdTimeRemaining > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl animate-in slide-in-from-top-2 duration-300">
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl animate-in slide-in-from-top-2 duration-300" role="status" aria-live="polite">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Timer className="w-5 h-5 text-blue-600" />
+              <Timer className="w-5 h-5 text-blue-600" aria-hidden="true" />
               <span className="text-blue-800 font-medium">
                 Time slot <strong>{myHeldSlot}</strong> reserved for you
               </span>
             </div>
-            <div className={`font-mono text-lg font-bold ${holdTimeRemaining < 60 ? 'text-red-600 animate-pulse' : 'text-blue-700'}`}>
-              {formatTime(holdTimeRemaining)}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (myHeldSlot) {
+                    const success = await storageService.createSlotHold(car.id, date, myHeldSlot, sessionId);
+                    if (success) {
+                      setHoldTimeRemaining(6 * 60);
+                      toast.success('Hold extended for 6 more minutes');
+                    }
+                  }
+                }}
+                className="text-xs px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                aria-label="Extend time slot hold by 6 minutes"
+              >
+                Extend Hold
+              </button>
+              <div
+                className={`font-mono text-lg font-bold ${holdTimeRemaining < 60 ? 'text-red-600 animate-pulse' : 'text-blue-700'}`}
+                aria-label={`${Math.floor(holdTimeRemaining / 60)} minutes and ${holdTimeRemaining % 60} seconds remaining`}
+              >
+                {formatTime(holdTimeRemaining)}
+              </div>
             </div>
           </div>
           {holdTimeRemaining < 60 && (
-            <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
-              <AlertCircle className="w-4 h-4" />
+            <p className="text-red-600 text-sm mt-2 flex items-center gap-1" role="alert">
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
               Less than 1 minute remaining! Complete your registration soon.
             </p>
           )}
@@ -238,18 +259,29 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
               <span>Select Time Slot</span>
               <span className="text-sm text-slate-500">(Click to reserve)</span>
             </label>
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2" role="group" aria-label="Available time slots">
               {availableTimeSlots.map((slot) => {
                 const booked = bookedSlots.has(slot);
                 const heldByOther = heldSlots.has(slot);
                 const isMyHold = slot === myHeldSlot;
                 const unavailable = booked || heldByOther;
 
+                // Build accessible status label
+                const statusLabel = booked
+                  ? `${slot}, booked and unavailable`
+                  : heldByOther
+                    ? `${slot}, held by another user, temporarily unavailable`
+                    : isMyHold
+                      ? `${slot}, currently held by you`
+                      : `${slot}, available, click to reserve`;
+
                 return (
                   <button
                     key={slot}
                     onClick={() => !unavailable && handleSlotSelect(slot)}
                     disabled={unavailable || isCreatingHold}
+                    aria-label={statusLabel}
+                    aria-pressed={isMyHold}
                     className={`p-3 rounded-lg border-2 transition-all duration-200 relative transform ${booked
                       ? 'border-red-200 bg-red-50 text-red-400 cursor-not-allowed opacity-60'
                       : heldByOther
@@ -263,19 +295,19 @@ export function TimeSlotSelection({ car, onNext, onBack, selectedDate, selectedT
                   >
                     {slot}
                     {booked && (
-                      <span className="absolute top-1 right-1 text-xs text-red-500 font-bold">✕</span>
+                      <span className="absolute top-1 right-1 text-xs text-red-500 font-bold" aria-hidden="true">✕</span>
                     )}
                     {heldByOther && (
-                      <span className="absolute top-1 right-1 text-xs text-orange-500 font-bold">⏳</span>
+                      <span className="absolute top-1 right-1 text-xs text-orange-500 font-bold" aria-hidden="true">⏳</span>
                     )}
                     {isMyHold && (
-                      <span className="absolute top-1 right-1 text-xs text-green-500 font-bold">✓</span>
+                      <span className="absolute top-1 right-1 text-xs text-green-500 font-bold" aria-hidden="true">✓</span>
                     )}
                   </button>
                 );
               })}
             </div>
-            <div className="mt-3 flex gap-4 text-xs text-slate-500">
+            <div className="mt-3 flex gap-4 text-xs text-slate-500" aria-hidden="true">
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-200"></span> Booked</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-200"></span> Held by another</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200"></span> Your hold</span>
