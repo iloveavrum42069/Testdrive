@@ -592,7 +592,7 @@ export class SupabaseStorageService {
     }
 
     /**
-     * Upload a waiver PDF (organized by event)
+     * Upload a waiver PDF (organized by event name)
      */
     async uploadWaiver(blob: Blob, driverName: string, eventDate: string, eventId?: string): Promise<string | null> {
         try {
@@ -601,8 +601,22 @@ export class SupabaseStorageService {
             const safeDate = eventDate.replace(/[^a-zA-Z0-9-]/g, '_');
             const fileName = `${safeName}_${safeDate}.pdf`;
 
-            // Organize by event folder if event ID is provided
-            const filePath = eventId ? `${eventId}/${fileName}` : fileName;
+            // Get event name for folder organization
+            let folderName = 'general';
+            if (eventId) {
+                const { data: event } = await supabase
+                    .from('events')
+                    .select('name')
+                    .eq('id', eventId)
+                    .single();
+
+                if (event?.name) {
+                    // Sanitize event name for use as folder name
+                    folderName = event.name.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_').trim();
+                }
+            }
+
+            const filePath = `${folderName}/${fileName}`;
 
             const { data, error } = await supabase.storage
                 .from('waivers')
