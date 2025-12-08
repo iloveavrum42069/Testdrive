@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, X, Check } from 'lucide-react';
+import { ChevronLeft, X, Check, Loader2 } from 'lucide-react';
 import { getPageSettings } from '../admin/PageEditor';
 import { Passenger } from '../../App';
 
 interface WaiverSignatureProps {
-  onNext: (signature: string, passengers: Passenger[]) => void;
+  onNext: (signature: string, passengers: Passenger[]) => void | Promise<void>;
   onBack: () => void;
   signature?: string;
   additionalPassengers: Passenger[];
@@ -48,6 +48,7 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasMainSignature, setHasMainSignature] = useState(!!signature);
   const [mainAgreed, setMainAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State for passengers
   const [passengers, setPassengers] = useState<Passenger[]>(additionalPassengers);
@@ -214,34 +215,40 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
     return true;
   };
 
-  const handleSubmit = () => {
-    if (!canSubmit()) return;
+  const handleSubmit = async () => {
+    if (!canSubmit() || isSubmitting) return;
 
     const mainCanvas = mainCanvasRef.current;
     if (!mainCanvas) return;
 
-    const mainSignatureData = mainCanvas.toDataURL();
+    setIsSubmitting(true);
 
-    // Collect all passenger signatures
-    const updatedPassengers = passengers.map((passenger, index) => {
-      const waiverCanvas = passengerCanvasRefs.current.get(index);
-      const consentCanvas = parentalConsentCanvasRefs.current.get(index);
+    try {
+      const mainSignatureData = mainCanvas.toDataURL();
 
-      const result: Passenger = { ...passenger };
+      // Collect all passenger signatures
+      const updatedPassengers = passengers.map((passenger, index) => {
+        const waiverCanvas = passengerCanvasRefs.current.get(index);
+        const consentCanvas = parentalConsentCanvasRefs.current.get(index);
 
-      if (waiverCanvas) {
-        result.signature = waiverCanvas.toDataURL();
-      }
+        const result: Passenger = { ...passenger };
 
-      // Add parental consent signature for minors
-      if (!passenger.isOver18 && consentCanvas) {
-        result.parentalConsentSignature = consentCanvas.toDataURL();
-      }
+        if (waiverCanvas) {
+          result.signature = waiverCanvas.toDataURL();
+        }
 
-      return result;
-    });
+        // Add parental consent signature for minors
+        if (!passenger.isOver18 && consentCanvas) {
+          result.parentalConsentSignature = consentCanvas.toDataURL();
+        }
 
-    onNext(mainSignatureData, updatedPassengers);
+        return result;
+      });
+
+      await onNext(mainSignatureData, updatedPassengers);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -573,10 +580,17 @@ I HAVE READ THIS PARENTAL CONSENT AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERS
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit()}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95 disabled:active:scale-100"
+            disabled={!canSubmit() || isSubmitting}
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95 disabled:active:scale-100"
           >
-            Complete Registration
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Saving Registration...
+              </>
+            ) : (
+              'Complete Registration'
+            )}
           </button>
         </div>
       </div>
